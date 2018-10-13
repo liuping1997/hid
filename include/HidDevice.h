@@ -49,8 +49,8 @@ public:
 	void close();
 	bool reset();
 	bool read();
-	bool writeCmd(char *wbuf);
-	bool readCmd(char *rbuf);
+	bool write(char *wbuf);
+	bool read(char *rbuf);
 
 private:
 	float ByteToFloat(unsigned char *pArr);

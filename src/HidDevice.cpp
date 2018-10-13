@@ -2,6 +2,7 @@
 #include "../include/HidSdk.h"
 #include "../include/HidDevice.h"
 #include <iostream>
+#include <mutex>
 
 #define USHORT unsigned short 
 std::mutex gMutex;
@@ -16,7 +17,7 @@ CHidDevice::~CHidDevice(void)
 	delete mDeviceIo;
 }
 
-BOOL CHidDevice::open(USHORT usVID, USHORT usPID)
+bool CHidDevice::open(USHORT usVID, USHORT usPID)
 {
 	return mDeviceIo->OpenDevice(usVID, usPID);
 }
@@ -34,14 +35,14 @@ bool CHidDevice::write(char * wbuf)
 
 bool CHidDevice::read(char * rbuf)
 {
-	std::lock_guard guard(&gMutex);
+	std::lock_guard<std::mutex> guard(gMutex);
 	DWORD Length;
 	return mDeviceIo->ReadFile(rbuf, 32, &Length, 2000);
 }
 
 bool CHidDevice::read()
 {
-	gMutex.lock();
+	std::lock_guard<std::mutex> guard(gMutex);
 
 	char buffer[64]={0};
 	DWORD Length;
@@ -148,43 +149,10 @@ bool CHidDevice::read()
 	c1[0] = buffer[45];
 	memcpy(&tempShort, &c1[0], 2);
 
-	gMutex.unlock();
-
 	return true;
 }
 
-void CHidDevice::SendControlValue(char relay1_status,char relay2_status ,short  DAC1_value,short DAC2_value,short servo_value)
-{
-	gMutex.lock();
-
-	unsigned char xBuf[10];
-	DWORD Length;
-	short int sTemp;
-	xBuf[0]= 0x00;
-	xBuf[1]= 0xAA;
-	xBuf[2]= relay1_status;   
-	xBuf[3]= relay2_status;  
-
-	sTemp = DAC1_value;
-
-	xBuf[4]= ( unsigned char)((sTemp&0xFF00)>>8);   
-	xBuf[5]= ( unsigned char)((sTemp&0x00FF)); 
-
-	sTemp = DAC2_value;
-	xBuf[6]= ( unsigned char)((sTemp&0xFF00)>>8);   
-	xBuf[7]= ( unsigned char)((sTemp&0x00FF)); 
-
-	
-    sTemp = servo_value;
-	xBuf[8]= ( unsigned char)((sTemp&0xFF00)>>8);   
-	xBuf[9]= ( unsigned char)((sTemp&0x00FF)); 
-
-	mDeviceIo->WriteFile((char *)&xBuf, sizeof(xBuf), &Length, 2000);
-
-	gMutex.unlock();
-}
-
-bool CHidDevice::setState()
+bool CHidDevice::SetState()
 {
 	unsigned char xBuf[2];
 
@@ -213,7 +181,6 @@ float CHidDevice::ByteToFloat(unsigned char *pArr)
 
 	return data.value;
 }
-
 
 int CHidDevice::ByteToInt(unsigned char* pArr,int size)
 {

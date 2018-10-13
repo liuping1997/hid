@@ -1,22 +1,19 @@
 // HidSdk.cpp : Defines the exported functions for the DLL application.
 //
 
-#include "Windows.h"
-#include "../include/HidSdk.h"
+#include <Windows.h>
 #include <iostream>
+#include "../include/HidSdk.h"
 #include "../include/ComData.h"
 
-using std::cout ;
+using std::cout;
 using std::endl;
-
 
 // This is the constructor of a class that has been exported.
 // see HidSdk.h for the class definition
 CHidSdk::CHidSdk()
 {
-	
 }
-
 
 CHidIO::CHidIO():m_hReadHandle(INVALID_HANDLE_VALUE)
 		,m_hWriteHandle(INVALID_HANDLE_VALUE)
