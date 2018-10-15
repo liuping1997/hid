@@ -29,14 +29,6 @@ extern "C"{
 #define HIDSDK_API __declspec(dllimport)
 #endif
 
-// This class is exported from the HidSdk.dll
-class CHidSdk {
-public:
-	CHidSdk(void);
-	// TODO: add your methods here.
-};
-
-
 #define HID_MAX_PACKET_SIZE_EP 64
 
 class CHidIO {

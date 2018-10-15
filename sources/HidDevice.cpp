@@ -1,11 +1,15 @@
-#include "Windows.h"
-#include "../include/HidSdk.h"
-#include "../include/HidDevice.h"
+#include "HidSdk.hpp"
+#include "HidDevice.hpp"
+#include "Logger.hpp"
 #include <iostream>
+#include <thread>
+#include <chrono>
 #include <mutex>
+#include <algorithm>
+#include <Windows.h>
 
 #define USHORT unsigned short 
-std::mutex gMutex;
+using namespace std::chrono;
 
 CHidDevice::CHidDevice(void)
 {
@@ -24,33 +28,46 @@ bool CHidDevice::open(USHORT usVID, USHORT usPID)
 
 void CHidDevice::close()
 {
+	std::lock_guard<std::mutex> guard(mMutex);
 	mDeviceIo->CloseDevice();
 }
 
-bool CHidDevice::write(char * wbuf)
+bool CHidDevice::flush()
 {
-	DWORD Length;
-	return mDeviceIo->WriteFile(wbuf, 32, &Length, 2000);
+	std::lock_guard<std::mutex> guard(mMutex);
+	while (mWriteBufs.size() > 0)
+	{
+		auto data = mWriteBufs.front();
+		DWORD Length;
+		mDeviceIo->WriteFile(data.data(), 32, &Length, 2000);
+		mWriteBufs.pop();
+	}
+	return true;
 }
 
-bool CHidDevice::read(char * rbuf)
+void CHidDevice::write(const Buffer&buf)
 {
-	std::lock_guard<std::mutex> guard(gMutex);
-	DWORD Length;
-	return mDeviceIo->ReadFile(rbuf, 32, &Length, 2000);
+	std::lock_guard<std::mutex> guard(mMutex);
+	mWriteBufs.push(buf);
 }
 
-bool CHidDevice::read()
+void CHidDevice::read(Buffer& buf)
 {
-	std::lock_guard<std::mutex> guard(gMutex);
+	std::lock_guard<std::mutex> guard(mMutex);
+	buf = mReadBuf;
+}
 
-	char buffer[64]={0};
+bool CHidDevice::fetch()
+{
+	std::lock_guard<std::mutex> guard(mMutex);
+
+	char* buffer = mReadBuf.data();
 	DWORD Length;
 	short tempShort;
 	unsigned char c1[2];
 	unsigned char b2f[4];
 	SetState();
-	if(!(mDeviceIo->ReadFile(buffer, sizeof(buffer), &Length, 2000)))
+	if(!(mDeviceIo->ReadFile(mReadBuf.data(), sizeof(buffer), &Length, 2000)))
 	{
 		return false;
 	}
@@ -167,6 +184,29 @@ bool CHidDevice::SetState()
 	else
 	{
 		return true;
+	}
+}
+
+void CHidDevice::update()
+{
+	while (true)
+	{
+		if (!mOpened)
+		{
+			std::this_thread::sleep_for(std::chrono::seconds(1));
+			spdlog::info("Hid has not open.Wait 1s");
+			continue;
+		}
+
+		auto start = system_clock::now(); 
+		std::lock_guard<std::mutex> guard(mMutex);
+		fetch();
+		flush();
+		auto end = system_clock::now(); 
+		auto duration = duration_cast<milliseconds>(end - start);
+		auto value = static_cast<long long>(max(0, 1000.0f / mLimtedHZ - duration.count()));
+		std::this_thread::sleep_for(std::chrono::milliseconds(value));
+		spdlog::info("rw loop cost:{0:d}ms",value);
 	}
 }
 

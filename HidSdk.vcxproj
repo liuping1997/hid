@@ -103,12 +103,14 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;HIDSDK_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\HidSdk\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Sources;$(SolutionDir)thirdparty\spdlog\include;$(SolutionDir)thirdparty\lua</AdditionalIncludeDirectories>
+      <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\HidSdk\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -138,29 +140,94 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;HIDSDK_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\HidSdk\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Sources;$(SolutionDir)thirdparty\spdlog\include;$(SolutionDir)thirdparty\lua</AdditionalIncludeDirectories>
+      <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)\HidSdk\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="src\ReadMe.txt" />
+    <ClInclude Include="sources\Application.hpp" />
+    <ClInclude Include="sources\Exports.hpp" />
+    <ClInclude Include="sources\HidDevice.hpp" />
+    <ClInclude Include="sources\HidSdk.hpp" />
+    <ClInclude Include="sources\Logger.hpp" />
+    <ClInclude Include="sources\Lua.hpp" />
+    <ClInclude Include="sources\LuaBind.hpp" />
+    <ClInclude Include="sources\Proto.hpp" />
+    <ClInclude Include="thirdparty\lua\lapi.h" />
+    <ClInclude Include="thirdparty\lua\lauxlib.h" />
+    <ClInclude Include="thirdparty\lua\lcode.h" />
+    <ClInclude Include="thirdparty\lua\lctype.h" />
+    <ClInclude Include="thirdparty\lua\ldebug.h" />
+    <ClInclude Include="thirdparty\lua\ldo.h" />
+    <ClInclude Include="thirdparty\lua\lfunc.h" />
+    <ClInclude Include="thirdparty\lua\lgc.h" />
+    <ClInclude Include="thirdparty\lua\ljumptab.h" />
+    <ClInclude Include="thirdparty\lua\llex.h" />
+    <ClInclude Include="thirdparty\lua\llimits.h" />
+    <ClInclude Include="thirdparty\lua\lmem.h" />
+    <ClInclude Include="thirdparty\lua\lobject.h" />
+    <ClInclude Include="thirdparty\lua\lopcodes.h" />
+    <ClInclude Include="thirdparty\lua\lparser.h" />
+    <ClInclude Include="thirdparty\lua\lprefix.h" />
+    <ClInclude Include="thirdparty\lua\lstate.h" />
+    <ClInclude Include="thirdparty\lua\lstring.h" />
+    <ClInclude Include="thirdparty\lua\ltable.h" />
+    <ClInclude Include="thirdparty\lua\ltests.h" />
+    <ClInclude Include="thirdparty\lua\ltm.h" />
+    <ClInclude Include="thirdparty\lua\lua.h" />
+    <ClInclude Include="thirdparty\lua\luaconf.h" />
+    <ClInclude Include="thirdparty\lua\lualib.h" />
+    <ClInclude Include="thirdparty\lua\lundump.h" />
+    <ClInclude Include="thirdparty\lua\lvm.h" />
+    <ClInclude Include="thirdparty\lua\lzio.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\ComData.h" />
-    <ClInclude Include="include\Exports.h" />
-    <ClInclude Include="include\HidDevice.h" />
-    <ClInclude Include="include\HidSdk.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="src\dllmain.cpp" />
-    <ClCompile Include="src\HidDevice.cpp" />
-    <ClCompile Include="src\HidSdk.cpp" />
+    <ClCompile Include="sources\Application.cpp" />
+    <ClCompile Include="sources\HidDevice.cpp" />
+    <ClCompile Include="sources\HidMain.cpp" />
+    <ClCompile Include="sources\HidSdk.cpp" />
+    <ClCompile Include="thirdparty\lua\lapi.c" />
+    <ClCompile Include="thirdparty\lua\lauxlib.c" />
+    <ClCompile Include="thirdparty\lua\lbaselib.c" />
+    <ClCompile Include="thirdparty\lua\lcode.c" />
+    <ClCompile Include="thirdparty\lua\lcorolib.c" />
+    <ClCompile Include="thirdparty\lua\lctype.c" />
+    <ClCompile Include="thirdparty\lua\ldblib.c" />
+    <ClCompile Include="thirdparty\lua\ldebug.c" />
+    <ClCompile Include="thirdparty\lua\ldo.c" />
+    <ClCompile Include="thirdparty\lua\ldump.c" />
+    <ClCompile Include="thirdparty\lua\lfunc.c" />
+    <ClCompile Include="thirdparty\lua\lgc.c" />
+    <ClCompile Include="thirdparty\lua\linit.c" />
+    <ClCompile Include="thirdparty\lua\liolib.c" />
+    <ClCompile Include="thirdparty\lua\llex.c" />
+    <ClCompile Include="thirdparty\lua\lmathlib.c" />
+    <ClCompile Include="thirdparty\lua\lmem.c" />
+    <ClCompile Include="thirdparty\lua\loadlib.c" />
+    <ClCompile Include="thirdparty\lua\lobject.c" />
+    <ClCompile Include="thirdparty\lua\lopcodes.c" />
+    <ClCompile Include="thirdparty\lua\loslib.c" />
+    <ClCompile Include="thirdparty\lua\lparser.c" />
+    <ClCompile Include="thirdparty\lua\lstate.c" />
+    <ClCompile Include="thirdparty\lua\lstring.c" />
+    <ClCompile Include="thirdparty\lua\lstrlib.c" />
+    <ClCompile Include="thirdparty\lua\ltable.c" />
+    <ClCompile Include="thirdparty\lua\ltablib.c" />
+    <ClCompile Include="thirdparty\lua\ltests.c" />
+    <ClCompile Include="thirdparty\lua\ltm.c" />
+    <ClCompile Include="thirdparty\lua\lua.c" />
+    <ClCompile Include="thirdparty\lua\lundump.c" />
+    <ClCompile Include="thirdparty\lua\lutf8lib.c" />
+    <ClCompile Include="thirdparty\lua\lvm.c" />
+    <ClCompile Include="thirdparty\lua\lzio.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

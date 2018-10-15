@@ -6,7 +6,8 @@
 #define HIDSDK_API __declspec(dllimport)
 #endif
 #include <mutex>
-#include <Windows.h>
+#include <queue>
+#include <array>
 
 class CHidCmd;
 
@@ -38,8 +39,15 @@ typedef union {
 
 class CHidDevice
 {
+	using Buffer = std::array<char, 64>;
 private:
-	CHidCmd *mDeviceIo;
+	std::mutex mMutex;
+	CHidCmd *mDeviceIo = nullptr;
+	bool mOpened = false;
+	/// Êý¾Ý¶ÁÐ´ÆµÂÊ
+	int mLimtedHZ = 20;
+	Buffer mReadBuf;
+	std::queue<Buffer> mWriteBufs;
 
 public:
 	CHidDevice(void);
@@ -48,13 +56,15 @@ public:
 	bool open(unsigned short usVID, unsigned short usPID);
 	void close();
 	bool reset();
-	bool read();
-	bool write(char *wbuf);
-	bool read(char *rbuf);
+	void write(const Buffer& buf);
+	void read(Buffer& buf);
 
 private:
 	float ByteToFloat(unsigned char *pArr);
 	int ByteToInt(unsigned char* pArr,int size=4);
 	bool SetState(void);
+	void update();
+	bool fetch();
+	bool flush();
 
 };
