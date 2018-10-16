@@ -86,6 +86,11 @@ void CHidDevice::write(const Buffer&buf)
 
 void CHidDevice::read(Buffer& buf)
 {
+	if (!mOpened)
+	{
+		buf = { 'h','i','d',' ','n','o','t',' ','o','p','e','n','e','d','\0'};
+		return;
+	}
 	std::lock_guard<std::mutex> guard(mMutex);
 	buf = mReadBuf;
 }

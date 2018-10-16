@@ -44,7 +44,7 @@ int main (int argc, char **argv)
 	spdlog::info("\n[1] open\n[2] close\n[3] read\n[4] write\n[q] quit\n");
 	while (true)
 	{
-		char c = getch();
+		char c = _getch();
 		if (c == 'q')
 		{
 			break;

@@ -67,8 +67,9 @@ namespace Lua
 	{
 		auto cmd = static_cast<unsigned char>(lua_tointeger(L, -2));
 		auto len = static_cast<int>(lua_tointeger(L, -1));
-		Application::instance().read(cmd,len);
-		return 0;
+		const char* buf = reinterpret_cast<const char*>(Application::instance().read(cmd,len));
+		lua_pushlstring(L, buf, len);
+		return 1;
 	}
 
 	static int write_hid(lua_State *L)
