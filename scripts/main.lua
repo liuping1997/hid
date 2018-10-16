@@ -1,4 +1,5 @@
 local app = require("app")
+local console = require("console")
 local proto = {
 {1000,0,"byte","vein1"},
 {1001,0,"byte","vein2"},
@@ -11,6 +12,11 @@ local proto = {
 
 function load()
 	print("lua load")
+end
+
+function event_loop()
+	--print("event_loop")
+	test_console_print()
 end
 
 function test_open()
@@ -41,4 +47,13 @@ end
 
 function test_write()
 	print("test_write")
+end
+
+function test_console_print()
+	console.set_cursor_visible(false)
+	--console.set_buffer_size(300,200)
+	console.print(100,1,"xxxxxxxxxxxxx\n")
+	console.print(100,2,"yyyyyyyyyyyyy\n")
+	console.print(100,3,"zzzzzzzzzzzzz\n")
+	console.print(100,4,"8888888\n")
 end

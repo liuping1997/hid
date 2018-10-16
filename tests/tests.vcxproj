@@ -68,6 +68,7 @@
     <ClInclude Include="..\sources\LuaBind.hpp" />
     <ClInclude Include="..\sources\Proto.hpp" />
     <ClInclude Include="..\sources\scriptapi\ApplicationAPI.hpp" />
+    <ClInclude Include="..\sources\scriptapi\ConsoleAPI.hpp" />
     <ClInclude Include="..\sources\scriptapi\HidAPI.hpp" />
     <ClInclude Include="..\sources\scriptapi\ScriptCore.hpp" />
     <ClInclude Include="..\thirdparty\lua\lapi.h" />

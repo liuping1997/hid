@@ -4,6 +4,7 @@
 #include "Logger.hpp"
 #include "Application.hpp"
 #include "ApplicationAPI.hpp"
+#include "ConsoleAPI.hpp"
 
 namespace Lua
 {
@@ -35,6 +36,7 @@ namespace Lua
 	void registerAPI(lua_State* l)
 	{
 		application_register(l);
+		console_register(l);
 		Lua::L = l;
 	}
 

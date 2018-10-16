@@ -242,5 +242,8 @@
     <ClInclude Include="..\sources\scriptapi\ScriptCore.hpp">
       <Filter>scriptapi</Filter>
     </ClInclude>
+    <ClInclude Include="..\sources\scriptapi\ConsoleAPI.hpp">
+      <Filter>scriptapi</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
