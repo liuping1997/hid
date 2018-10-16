@@ -39,8 +39,11 @@ typedef union {
 
 class CHidDevice
 {
-	using Buffer = std::array<char, 64>;
+public:
+	using Buffer = std::array<unsigned char, 64>;
+
 private:
+	bool mRunning = true;
 	std::mutex mMutex;
 	CHidCmd *mDeviceIo = nullptr;
 	bool mOpened = false;
@@ -48,6 +51,7 @@ private:
 	int mLimtedHZ = 20;
 	Buffer mReadBuf;
 	std::queue<Buffer> mWriteBufs;
+	std::shared_ptr<std::thread> mWorkerThread = nullptr;
 
 public:
 	CHidDevice(void);
@@ -55,9 +59,11 @@ public:
 
 	bool open(unsigned short usVID, unsigned short usPID);
 	void close();
-	bool reset();
+	bool reset() { return true; }
 	void write(const Buffer& buf);
+	void write(const Buffer&& buf);
 	void read(Buffer& buf);
+	void quit();
 
 private:
 	float ByteToFloat(unsigned char *pArr);
@@ -66,5 +72,4 @@ private:
 	void update();
 	bool fetch();
 	bool flush();
-
 };

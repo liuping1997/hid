@@ -15,8 +15,8 @@ public:
 		char name[8] = "null";
 	};
 
-private:
-	static inline unordered_map<string, Item> mItems;
+public:
+	static inline unordered_map<string, Item> values;
 
 public:
 	Proto()
@@ -32,26 +32,26 @@ public:
 	inline Item&& value(const string&& key)
 	{
 		Item item{};
-		if (mItems.find(key) != mItems.end())
-			item = mItems[key];
+		if (values.find(key) != values.end())
+			item = values[key];
 		return std::move(item);
 	}
 
 	inline Item&& value(const string& key)
 	{
 		Item item{};
-		if (mItems.find(key) != mItems.end())
-			item = mItems[key];
+		if (values.find(key) != values.end())
+			item = values[key];
 		return std::move(item);
 	}
 
-	static void load(const vector<Item>& items)
+	static void load(const vector<Item>& in)
 	{
-		mItems.clear();
-		for (auto item : items)
+		values.clear();
+		for (auto item : in)
 		{
-			mItems[string(item.name)] = item;
-			mItems[to_string(item.id)] = item;
+			values[string(item.name)] = item;
+			values[to_string(item.id)] = item;
 		}
 	}
 };

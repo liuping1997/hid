@@ -19,6 +19,7 @@
 *.VC.db
 *.dll
 *.sln
+*.ipch
 *.*_Serialize
 moc_*.cpp
 /x64

@@ -23,26 +23,59 @@ CHidDevice::~CHidDevice(void)
 
 bool CHidDevice::open(USHORT usVID, USHORT usPID)
 {
-	return mDeviceIo->OpenDevice(usVID, usPID);
+	if (mWorkerThread != nullptr)
+	{
+		if (mRunning && mWorkerThread->joinable())
+		{
+			mRunning = false;
+			mWorkerThread->join();
+		}
+	}
+	mRunning = true;
+	mWorkerThread = std::make_shared<std::thread>(&CHidDevice::update, this);
+	mOpened =  mDeviceIo->OpenDevice(usVID, usPID);
+	return mOpened;
 }
 
 void CHidDevice::close()
 {
-	std::lock_guard<std::mutex> guard(mMutex);
-	mDeviceIo->CloseDevice();
+	try
+	{
+		if (mRunning &&mWorkerThread != nullptr)
+		{
+			mRunning = false;
+			mWorkerThread->join();
+		}
+		std::lock_guard<std::mutex> guard(mMutex);
+		mDeviceIo->CloseDevice();
+		mOpened = false;
+	}
+	catch (std::system_error &e)
+	{
+		spdlog::error(e.what());
+	}
 }
 
 bool CHidDevice::flush()
 {
+	if (!mOpened)
+		return false;
+
 	std::lock_guard<std::mutex> guard(mMutex);
 	while (mWriteBufs.size() > 0)
 	{
 		auto data = mWriteBufs.front();
 		DWORD Length;
-		mDeviceIo->WriteFile(data.data(), 32, &Length, 2000);
+		mDeviceIo->WriteFile(data.data(), data.at(63), &Length, 2000);
 		mWriteBufs.pop();
 	}
 	return true;
+}
+
+void CHidDevice::write(const Buffer&&buf)
+{
+	std::lock_guard<std::mutex> guard(mMutex);
+	mWriteBufs.push(buf);
 }
 
 void CHidDevice::write(const Buffer&buf)
@@ -57,17 +90,26 @@ void CHidDevice::read(Buffer& buf)
 	buf = mReadBuf;
 }
 
+void CHidDevice::quit()
+{
+	mRunning = false;
+	mWorkerThread->join();
+}
+
 bool CHidDevice::fetch()
 {
+	if (!mOpened)
+		return false;
+
 	std::lock_guard<std::mutex> guard(mMutex);
 
-	char* buffer = mReadBuf.data();
+	auto buffer = mReadBuf.data();
 	DWORD Length;
 	short tempShort;
 	unsigned char c1[2];
 	unsigned char b2f[4];
 	SetState();
-	if(!(mDeviceIo->ReadFile(mReadBuf.data(), sizeof(buffer), &Length, 2000)))
+	if(!(mDeviceIo->ReadFile(mReadBuf.data() + 6, mReadBuf.back(), &Length, 2000)))
 	{
 		return false;
 	}
@@ -171,15 +213,15 @@ bool CHidDevice::fetch()
 
 bool CHidDevice::SetState()
 {
-	unsigned char xBuf[2];
+	if (!mOpened)
+		return false;
 
 	DWORD Length;
-	xBuf[0] = 0x00;
-	xBuf[1] = 0xB5;
-	if (!mDeviceIo->WriteFile((char *)&xBuf, sizeof(xBuf), &Length, 2000))
+	unsigned char xBuf = 0xB5;
+	if (!mDeviceIo->WriteFile(&xBuf, sizeof(xBuf) + 1, &Length, 2000))
 	{
-		mDeviceIo->OpenDevice(0x051A, 0x511B);
-		return mDeviceIo->WriteFile((char *)&xBuf, sizeof(xBuf), &Length, 2000);
+		bool ret = mDeviceIo->OpenDevice(0x051A, 0x511B);
+		return mDeviceIo->WriteFile(&xBuf, sizeof(xBuf) + 1, &Length, 2000);
 	}
 	else
 	{
@@ -189,24 +231,21 @@ bool CHidDevice::SetState()
 
 void CHidDevice::update()
 {
-	while (true)
+	// µÈ´ý»½ÐÑ
+	while (!mRunning)
 	{
-		if (!mOpened)
-		{
-			std::this_thread::sleep_for(std::chrono::seconds(1));
-			spdlog::info("Hid has not open.Wait 1s");
-			continue;
-		}
-
+		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+	}
+	while (mRunning)
+	{
 		auto start = system_clock::now(); 
-		std::lock_guard<std::mutex> guard(mMutex);
 		fetch();
 		flush();
 		auto end = system_clock::now(); 
 		auto duration = duration_cast<milliseconds>(end - start);
 		auto value = static_cast<long long>(max(0, 1000.0f / mLimtedHZ - duration.count()));
 		std::this_thread::sleep_for(std::chrono::milliseconds(value));
-		spdlog::info("rw loop cost:{0:d}ms",value);
+		//spdlog::info("rw loop cost:{0:d}ms",value);
 	}
 }
 

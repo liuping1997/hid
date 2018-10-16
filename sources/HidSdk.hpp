@@ -46,14 +46,14 @@ public:
 	~CHidIO();
 	void CloseDevice();
 	BOOL OpenDevice(BOOL bUseTwoHandle, USHORT usVID,USHORT usPID);
-	BOOL ReadFile(char *pcBuffer, size_t szMaxLen, DWORD *pdwLength, DWORD dwMilliseconds);
-	BOOL WriteFile( char *pcBuffer, size_t szLen, DWORD *pdwLength, DWORD dwMilliseconds);
+	BOOL ReadFile(unsigned char *pcBuffer, size_t szMaxLen, DWORD *pdwLength, DWORD dwMilliseconds);
+	BOOL WriteFile(unsigned char *pcBuffer, size_t szLen, DWORD *pdwLength, DWORD dwMilliseconds);
 };
 
 class CHidCmd {
 
 protected:
-	CHAR	m_acBuffer[HID_MAX_PACKET_SIZE_EP + 1];
+	unsigned char m_acBuffer[HID_MAX_PACKET_SIZE_EP + 1];
 	UCHAR	m_ucCmdIndex;
 	BOOL	m_bCmdError;
 	CHidIO	m_hidIO;
@@ -62,8 +62,8 @@ public:
 	 ~CHidCmd();
 	 void CloseDevice();
 	 BOOL OpenDevice(USHORT usVID, USHORT usPID);
-	 BOOL ReadFile(char *pcBuffer,size_t szMaxLen,DWORD *pdwLength,DWORD dwMilliseconds);
-	 BOOL WriteFile( char *pcBuffer ,DWORD dwLen ,DWORD *pdwLength ,DWORD dwMilliseconds);
+	 BOOL ReadFile(unsigned char *pcBuffer,size_t szMaxLen,DWORD *pdwLength,DWORD dwMilliseconds);
+	 BOOL WriteFile( unsigned char *pcBuffer ,DWORD dwLen ,DWORD *pdwLength ,DWORD dwMilliseconds);
 	 BOOL IsCmdError();
-	 USHORT CRC16(CHAR *puchMsgg,DWORD usDataLen,USHORT crcInput);
+	 USHORT CRC16(unsigned char *puchMsgg,DWORD usDataLen,USHORT crcInput);
 };

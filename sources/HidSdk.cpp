@@ -304,7 +304,7 @@ BOOL CHidIO::OpenDevice(BOOL bUseTwoHandle, USHORT usVID,USHORT usPID)
 	return MyDevFound;
 }
 
-BOOL CHidIO::ReadFile(char *pcBuffer, size_t szMaxLen, DWORD *pdwLength, DWORD dwMilliseconds)
+BOOL CHidIO::ReadFile(unsigned char *pcBuffer, size_t szMaxLen, DWORD *pdwLength, DWORD dwMilliseconds)
 {
 	HANDLE events[2] = {m_hAbordEvent,m_hReadEvent};
 
@@ -351,7 +351,7 @@ BOOL CHidIO::ReadFile(char *pcBuffer, size_t szMaxLen, DWORD *pdwLength, DWORD d
 	return FALSE;
 }
 
-BOOL CHidIO::WriteFile(char *pcBuffer, size_t szLen, DWORD *pdwLength, DWORD dwMilliseconds)
+BOOL CHidIO::WriteFile(unsigned char *pcBuffer, size_t szLen, DWORD *pdwLength, DWORD dwMilliseconds)
 {
 	HANDLE events[2] = {m_hAbordEvent, m_hWriteEvent};
 
@@ -367,7 +367,7 @@ BOOL CHidIO::WriteFile(char *pcBuffer, size_t szLen, DWORD *pdwLength, DWORD dwM
 	if(!::WriteFile(m_hWriteHandle,pcBuffer,szLen,NULL,&overlapped))
 	{
 		err=GetLastError();
-		cout<<"Last Error is" <<err<<endl;
+		//cout<<"Last Error is" <<err<<endl;
 		return FALSE;
 	}
 
@@ -415,13 +415,18 @@ BOOL  CHidCmd:: OpenDevice(USHORT usVID, USHORT usPID)
 	return m_hidIO.OpenDevice(TRUE,usVID,usPID);
 }
 
-BOOL CHidCmd:: ReadFile(char *pcBuffer,size_t szMaxLen,DWORD *pdwLength,DWORD dwMilliseconds)
+BOOL CHidCmd:: ReadFile(unsigned char *pcBuffer,size_t szMaxLen,DWORD *pdwLength,DWORD dwMilliseconds)
 {
 	DWORD dwStart = GetTickCount();
 	USHORT crc=0,crc_pack=0;
 	while(1)
 	{
 		DWORD dwLength;
+		m_acBuffer[0] = 0; 
+		m_acBuffer[1] = 0; 
+		m_acBuffer[2] = 0x02; 
+		m_acBuffer[4] = szMaxLen; 
+		m_acBuffer[5] = 0; 
 		if(!m_hidIO.ReadFile(m_acBuffer,sizeof(m_acBuffer),&dwLength,dwMilliseconds))
 			return FALSE;
 		//Check if correct package index was read
@@ -450,13 +455,12 @@ BOOL CHidCmd:: ReadFile(char *pcBuffer,size_t szMaxLen,DWORD *pdwLength,DWORD dw
 			else
 			{
 				return FALSE;
-
 			}
 		}
 	}
 }
 
-BOOL CHidCmd:: WriteFile(char *pcBuffer ,DWORD dwLen ,DWORD *pdwLength ,DWORD dwMilliseconds)
+BOOL CHidCmd:: WriteFile(unsigned char *pcBuffer ,DWORD dwLen ,DWORD *pdwLength ,DWORD dwMilliseconds)
 {
 	USHORT crc=0;
 	// Set new package index value
@@ -466,17 +470,16 @@ BOOL CHidCmd:: WriteFile(char *pcBuffer ,DWORD dwLen ,DWORD *pdwLength ,DWORD dw
 	DWORD dwCmdLength = dwLen;
 	if(dwCmdLength > sizeof(m_acBuffer) - 8)
 		dwCmdLength = sizeof(m_acBuffer)- 8;
-	m_acBuffer[0] = 0x00; //Always 0x00
+	//Always 0x00
+	m_acBuffer[0] = 0x00; 
 	//package Index
 	m_acBuffer[1] = 0x00;
-	m_acBuffer[2] = (CHAR)m_ucCmdIndex;
 	//board type
-	m_acBuffer[3] = 0x02;
+	m_acBuffer[2] = 0x02;
+	m_acBuffer[3] = 0;
 	//valid length
-	m_acBuffer[4] = 0x00;
-	m_acBuffer[5] = (UCHAR)dwCmdLength;
-	//m_acBuffer[1] = (CHAR)0x12;
-	//m_acBuffer[2] = (UCHAR)0x05;
+	m_acBuffer[4] = (UCHAR)dwCmdLength;
+	m_acBuffer[5] = 0;
 	memcpy(m_acBuffer + 6, pcBuffer ,dwCmdLength);
 	//新增加了CRC16校验，带2个字节 从包号开始到数据结束，随后2字节是CRC
 	crc = CRC16(&m_acBuffer[1],dwCmdLength+5,0xffff);
@@ -493,7 +496,7 @@ BOOL CHidCmd:: IsCmdError()
 }
 
 
-USHORT CHidCmd::CRC16(CHAR *puchMsgg,DWORD usDataLen,USHORT crcInput)
+USHORT CHidCmd::CRC16(unsigned char* puchMsgg,DWORD usDataLen,USHORT crcInput)
 {
 	UCHAR uchCRCHi;  
 	UCHAR uchCRCLo;  
