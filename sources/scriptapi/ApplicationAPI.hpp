@@ -76,7 +76,7 @@ namespace Lua
 	{
 		size_t rellen = 0;
 		auto data = reinterpret_cast<const unsigned char*>(lua_tolstring(L,-2, &rellen));
-		auto len = static_cast<size_t>(lua_tointeger(L, -1));
+		auto len = static_cast<int>(lua_tointeger(L, -1));
 		Application::instance().write(data, len);
 		return 0;
 	}

@@ -14,12 +14,12 @@ namespace Lua
 		auto cp = static_cast<int>(lua_tointeger(L, -2));
 		auto fontsize = static_cast<short>(lua_tointeger(L, -1));
 		SetConsoleOutputCP(cp);
-		CONSOLE_FONT_INFOEX info = { 0 }; 
+		/*CONSOLE_FONT_INFOEX info = { 0 }; 
 		info.cbSize = sizeof(info);
 		info.dwFontSize.Y = fontsize; 
-		info.FontWeight = FW_NORMAL;
+		info.FontWeight = FW_LIGHT;
 		wcscpy_s(info.FaceName, LF_FACESIZE,L"Consolas");
-		SetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), NULL, &info);
+		SetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), NULL, &info);*/
 		return 0;
 	}
 

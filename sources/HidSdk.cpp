@@ -482,9 +482,9 @@ BOOL CHidCmd:: WriteFile(unsigned char *pcBuffer ,DWORD dwLen ,DWORD *pdwLength 
 	m_acBuffer[5] = 0;
 	memcpy(m_acBuffer + 6, pcBuffer ,dwCmdLength);
 	//新增加了CRC16校验，带2个字节 从包号开始到数据结束，随后2字节是CRC
-	crc = CRC16(&m_acBuffer[1],dwCmdLength+5,0xffff);
-	m_acBuffer[dwCmdLength+6]=(unsigned char)((crc&0xFF00)>>8);  
-	m_acBuffer[dwCmdLength+7]=(unsigned char)(crc&0x00FF); 
+	crc = CRC16(&m_acBuffer[1],dwCmdLength+4,0xffff);
+	m_acBuffer[dwCmdLength+5]=(unsigned char)((crc&0xFF00)>>8);  
+	m_acBuffer[dwCmdLength+6]=(unsigned char)(crc&0x00FF); 
 
 	BOOL bRet = m_hidIO.WriteFile(m_acBuffer,sizeof(m_acBuffer),pdwLength,dwMilliseconds);
 	return bRet;

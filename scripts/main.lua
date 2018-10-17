@@ -1,8 +1,11 @@
+package.path = "../../scripts/?.lua;./scripts/?.lua"..package.path
+
 local app = require("app")
 local console = require("console")
---local tween = require("tween")
+local tween = require("tween")
 -- 读缓冲区
 local rbuf = {}
+local validhid = false
 -- 设备状态
 local status = {on = "开", off = "关", lay = "放置", leave = "取走", checked = "选中", unchecked = "未选"}
 local devices = {
@@ -24,31 +27,65 @@ local devices = {
 	}
 }
 
+-- 异常捕获
+function try(block)
+	local main = block.main
+	local catch = block.catch
+	local finally = block.finally
+
+	assert(main)
+
+	-- try to call it
+	local ok, errors = xpcall(main, debug.traceback)
+	if not ok then
+	-- run the catch function
+	if catch then
+	catch(errors)
+	end
+end
+
+	-- run the finally function
+	if finally then
+		finally(ok, errors)
+	end
+
+	-- ok?
+	if ok then
+		return errors
+	end
+end
+
 function init()
 	print("lua init")
-	console.set_cp(65001, 16)
+	console.set_cp(65001, 10)
 	console.set_cursor_visible(false)
 	console.set_window_size(120, 40)
 	console.set_buffer_size(120, 40)
 end
 
 function event_loop(dt)
-	--print("event_loop")
-	print("dt:" .. dt)
-	--tween:update(dt)
-	read_hid()
-	print_hid()
+	try{
+		main = function ()
+			read_hid()
+			print_hid()
+		end,
+		catch = function (errors)
+			print("catch : " .. errors)
+		end,
+		finally = function (ok, errors)
+		end,
+	}
+	--print("dt:" .. dt)
 end
 
 function open_hid()
-	print("test_open1")
-	app.open(0x051a, 0x511b)
-	print("test_open")
+	validhid = app.open(0x051a, 0x511b)
 end
 
 function close_hid()
-	app.close()
 	print("test_close")
+	validhid = false
+	app.close()
 end
 
 function is_on(d)
@@ -120,14 +157,11 @@ end
 
 function write_hid()
 	-- 电机控制
-	write_cmd("motor", 500, 1000, 200)
+	write_cmd("motor", 0, 500, 1000, 200)
 	-- Led控制
 	write_cmd("led", 0, 50, 0, 0)
 	-- 跑马灯控制
 	write_cmd("marquee", 0, 50, 10, 0)
-end
-
-function write_cmd(d, len)
 end
 
 function parse_short(d)
@@ -137,56 +171,32 @@ function parse_short(d)
 end
 
 function write_cmd(name, id, data1, data2, data3)
+	if validhid == false then
+		return
+	end
 	local device = devices[name]
 	local len = device.len
 	local type = device.type
-	buf[0] = device.cmd
-	buf[1] = id
+	local d = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	d[1] = device.cmd
+	d[2] = id
 	if type == "byte" then
-		buf[2] = data1
-		buf[3] = data2
-		buf[4] = data3
+		d[3] = data1 & 0xf
+		d[4] = data2 & 0xf
+		d[5] = data3 & 0xf
 	else
-		buf[2], buf[3] = parse_short(data1)
-		buf[4], buf[5] = parse_short(data2)
-		buf[6], buf[7] = parse_short(data3)
+		d[3], d[4] = parse_short(data1)
+		d[5], d[6] = parse_short(data2)
+		d[7], d[8] = parse_short(data3)
 	end
-	local d = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-	local buf = string.char(d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[l0])
-	return app.write_hid(buf, len)
-end
-
--- 设置马达
-function write_cmd_motor(id, short1, short2, short3)
-	local len = 0x09
-	buf[0] = 0xaa
-	buf[1] = id
-	buf[2], buf[3] = parse_short(short1)
-	buf[4], buf[5] = parse_short(short2)
-	buf[6], buf[7] = parse_short(short3)
-	return write_cmd(buf, len)
-end
-
--- 设置Led
-function write_cmd_led(id, byte)
-	local len = 0x03
-	buf[0] = 0xab
-	buf[1] = id
-	buf[2] = byte
-	return write_cmd(buf, len)
-end
-
--- 设置跑马灯
-function write_cmd_marquee(id, byte1, byte2)
-	local len = 0x05
-	buf[0] = 0xac
-	buf[1] = id
-	buf[2] = byte1
-	buf[3] = byte2
-	return write_cmd(buf, len)
+	local bytes = string.char(d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10])
+	return app.write(bytes, len)
 end
 
 function read_hid()
+	if validhid == false then
+		return
+	end
 	local cmd = 0xb5
 	local len = 0x26
 	local buf = app.read(cmd, len)

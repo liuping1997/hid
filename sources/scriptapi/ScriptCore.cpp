@@ -33,18 +33,25 @@ namespace Lua
 			if (fs::exists(p))
 				path = p;
 		}
-		spdlog::info(fs::absolute(path).string());
-		if (luaL_loadfile(L, path.c_str()))
+		if (luaL_loadfile(L, path.c_str()) != LUA_OK)
 		{
 			lua_actived = false;
 			spdlog::info(lua_tostring(L, -1));
 			return;
 		}
-		lua_actived = true;
-		int ret = lua_getglobal(L, "init");
-		if (lua_pcall(L, 0, 0, 0))
+		if (lua_pcall(L, 0, 0, 0) != LUA_OK)
 		{
 			spdlog::info(lua_tostring(L, -1));
+			return;
+		}
+
+		lua_actived = true;
+		if (lua_getglobal(L, "init") == LUA_TFUNCTION)
+		{
+			if (lua_pcall(L, 0, 0, 0) != LUA_OK)
+			{
+				spdlog::info(lua_tostring(L, -1));
+			}
 		}
 	}
 	
@@ -64,41 +71,24 @@ namespace Lua
 	{
 		if (!lua_actived)
 			return;
-		try
+		int ret = lua_getglobal(L, func);
+		if (lua_pcall(L, 0, 0, 0))
 		{
-			int ret = lua_getglobal(L, func);
-			if (lua_pcall(L, 0, 0, 0))
-			{
-				spdlog::info(lua_tostring(L, -1));
-				throw("lua error");
-			}
+			spdlog::info(lua_tostring(L, -1));
 		}
-		catch (...)
-		{
-			lua_actived = false;
-			spdlog::error("lua runtime error.", __FUNCTION__);
-		}
+
 	}
 
 	void call(const char* func, double arg, int nresults)
 	{
 		if (!lua_actived)
 			return;
-		try
-		{
-			int ret = lua_getglobal(L, func);
-			lua_pushnumber(L, arg);
+		int ret = lua_getglobal(L, func);
+		lua_pushnumber(L, arg);
 
-			if (lua_pcall(L, 1, 0, 0))
-			{
-				spdlog::info(lua_tostring(L, -1));
-				throw("lua error");
-			}
-		}
-		catch (...)
+		if (lua_pcall(L, 1, 0, 0))
 		{
-			lua_actived = false;
-			spdlog::error("lua runtime error.", __FUNCTION__);
+			spdlog::info(lua_tostring(L, -1));
 		}
 	}
 
@@ -106,22 +96,12 @@ namespace Lua
 	{
 		if (!lua_actived)
 			return;
-		try
+		int ret = lua_getglobal(L, func);
+		lua_pushinteger(L, arg1);
+		lua_pushinteger(L, arg2);
+		if (lua_pcall(L, 2, nresults, 0))
 		{
-			int ret = lua_getglobal(L, func);
-			lua_pushinteger(L, arg1);
-			lua_pushinteger(L, arg2);
-			if (lua_pcall(L, 2, nresults, 0))
-			{
-				spdlog::info(lua_tostring(L, -1));
-				throw("lua error");
-			}
-		}
-		catch (...)
-		{
-			lua_actived = false;
-			spdlog::error("lua runtime error.",__FUNCTION__);
+			spdlog::info(lua_tostring(L, -1));
 		}
 	}
-
 };
