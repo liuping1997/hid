@@ -4,6 +4,7 @@
 #include "HidDevice.hpp"
 #include "Logger.hpp"
 #include "ScriptAPI/ScriptCore.hpp"
+#include <filesystem>
 #include <lua.hpp>
 
 using namespace std;
@@ -29,6 +30,7 @@ public:
 	static void initialize()
 	{
 		// logger
+		std::filesystem::create_directory("./logs/");
 		auto rotating_logger = spdlog::rotating_logger_mt("hid", "./logs/hid.log", 1048576 * 5, 3);
 		spdlog::flush_every(std::chrono::seconds(3));
 	

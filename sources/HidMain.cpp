@@ -5,7 +5,9 @@
 #include "ScriptAPI/ScriptCore.hpp"
 #include <Windows.h>
 #include <conio.h>
+#include <filesystem>
 
+namespace fs = std::filesystem;
 std::shared_ptr<Application> app;
 
 extern "C"
@@ -39,6 +41,9 @@ extern "C"
 #ifdef _CONSOLE
 int main (int argc, char **argv) 
 {
+	fs::path apppath = argv[0];
+	fs::current_path(apppath.remove_filename());
+	spdlog::info("current apppath:{0}", fs::current_path().generic_string());
 	app.reset(&Application::instance());
 	app->initialize();
 	spdlog::info("\n[1] open\n[2] close\n[3] read\n[4] write\n[5] print\n[c] clear & help\n[q] quit\n");

@@ -5,6 +5,10 @@
 #include "Application.hpp"
 #include "ApplicationAPI.hpp"
 #include "ConsoleAPI.hpp"
+#include <filesystem>
+
+using namespace std;
+namespace fs = std::filesystem;
 
 namespace Lua
 {
@@ -17,7 +21,19 @@ namespace Lua
 		luaL_openlibs(L);
 		registerAPI(L);
 
-		if (luaL_loadfile(L, "../scripts/main.lua"))
+		array<string,4> paths = {
+			"./scripts/main.lua",
+			"./main.lua",
+			"../scripts/main.lua",
+			"../../scripts/main.lua"
+		};
+		string path = paths[0];
+		for (auto p : paths)
+		{
+			if (fs::exists(p))
+				path = p;
+		}
+		if (luaL_loadfile(L, path.c_str()))
 		{
 			lua_actived = false;
 			spdlog::info(lua_tostring(L, -1));
