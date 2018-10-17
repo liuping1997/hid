@@ -41,45 +41,41 @@ int main (int argc, char **argv)
 {
 	app.reset(&Application::instance());
 	app->initialize();
-	spdlog::info("\n[1] open\n[2] close\n[3] read\n[4] write\n[5] console print\n[q] quit\n");
+	spdlog::info("\n[1] open\n[2] close\n[3] read\n[4] write\n[5] print\n[c] clear & help\n[q] quit\n");
 	while (true)
 	{
 		Lua::call("event_loop");
 		if (_kbhit())
 		{
 			char c = _getch();
-			system("cls");
 			if (c == 'q')
 			{
 				break;
 			}
-			else if (c == 'h')
+			else if (c == 'c' || c == 'h')
 			{
-				spdlog::info("\n[1] open\n[2] close\n[3] read\n[4] write\n[5] console print\n[q] quit\n");
+				system("cls");
+				spdlog::info("\n[1] open\n[2] close\n[3] read\n[4] write\n[5] print\n[c] clear & help\n[q] quit\n");
 			}
 			else if (c == '1')
 			{
-				Lua::call("test_open");
+				Lua::call("open_hid");
 			}
 			else if (c == '2')
 			{
-				Lua::call("test_close");
+				Lua::call("close_hid");
 			}
 			else if (c == '3')
 			{
-				Lua::call("test_read");
+				Lua::call("read_hid");
 			}
 			else if (c == '4')
 			{
-				Lua::call("test_write");
+				Lua::call("write_hid");
 			}
 			else if (c == '5')
 			{
-				Lua::call("test_console_print");
-			}
-			else if (c == 'c')
-			{
-				system("cls");
+				Lua::call("print_hid");
 			}
 		}
 	}

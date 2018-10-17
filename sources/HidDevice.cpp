@@ -88,7 +88,7 @@ void CHidDevice::read(Buffer& buf)
 {
 	if (!mOpened)
 	{
-		buf = { 'h','i','d',' ','n','o','t',' ','o','p','e','n','e','d','\0'};
+		buf = { 'h','i','d',' ','n','o','t',' ','o','p','e','n','e','d'};
 		return;
 	}
 	std::lock_guard<std::mutex> guard(mMutex);
@@ -98,7 +98,8 @@ void CHidDevice::read(Buffer& buf)
 void CHidDevice::quit()
 {
 	mRunning = false;
-	mWorkerThread->join();
+	if (mWorkerThread != nullptr && mWorkerThread->joinable())
+		mWorkerThread->join();
 }
 
 bool CHidDevice::fetch()
@@ -225,7 +226,7 @@ bool CHidDevice::SetState()
 	unsigned char xBuf = 0xB5;
 	if (!mDeviceIo->WriteFile(&xBuf, sizeof(xBuf) + 1, &Length, 2000))
 	{
-		bool ret = mDeviceIo->OpenDevice(0x051A, 0x511B);
+		mOpened = mDeviceIo->OpenDevice(0x051A, 0x511B);
 		return mDeviceIo->WriteFile(&xBuf, sizeof(xBuf) + 1, &Length, 2000);
 	}
 	else

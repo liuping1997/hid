@@ -9,19 +9,23 @@
 namespace Lua
 {
 	inline static lua_State* L = nullptr;
+	inline static bool lua_actived = false;
 
 	void initialize()
 	{
 		L = luaL_newstate();
 		luaL_openlibs(L);
 		registerAPI(L);
+
 		if (luaL_loadfile(L, "../scripts/main.lua"))
 		{
+			lua_actived = false;
 			spdlog::info(lua_tostring(L, -1));
 			return;
 		}
+		lua_actived = true;
 		int ret = lua_pcall(L, 0, 0, 0);
-		ret = lua_getglobal(L, "load");
+		ret = lua_getglobal(L, "init");
 		if (lua_pcall(L, 0, 0, 0))
 		{
 			spdlog::info(lua_tostring(L, -1));
@@ -42,10 +46,21 @@ namespace Lua
 
 	void call(const char* func,int nresults)
 	{
-		int ret = lua_getglobal(L, func);
-		if (lua_pcall(L, 0, nresults, 0))
+		if (!lua_actived)
+			return;
+		try
 		{
-			spdlog::info(lua_tointeger(L, -1));
+			int ret = lua_getglobal(L, func);
+			if (lua_pcall(L, 0, nresults, 0))
+			{
+				spdlog::info(lua_tostring(L, -1));
+				throw("lua error");
+			}
+		}
+		catch (...)
+		{
+			lua_actived = false;
+			spdlog::error("lua runtime error.");
 		}
 	}
 
@@ -56,12 +71,23 @@ namespace Lua
 
 	void call(const char* func, int arg1, int arg2, int nresults)
 	{
-		int ret = lua_getglobal(L, func);
-		lua_pushinteger(L, arg1);
-		lua_pushinteger(L, arg2);
-		if (lua_pcall(L, 2, nresults, 0))
+		if (!lua_actived)
+			return;
+		try
 		{
-			spdlog::info(lua_tostring(L, -1));
+			int ret = lua_getglobal(L, func);
+			lua_pushinteger(L, arg1);
+			lua_pushinteger(L, arg2);
+			if (lua_pcall(L, 2, nresults, 0))
+			{
+				throw("lua error");
+				spdlog::info(lua_tostring(L, -1));
+			}
+		}
+		catch (...)
+		{
+			lua_actived = false;
+			spdlog::error("lua runtime error.",__FUNCTION__);
 		}
 	}
 
