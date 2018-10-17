@@ -74,8 +74,9 @@ namespace Lua
 
 	static int write_hid(lua_State *L)
 	{
-		auto data = reinterpret_cast<const unsigned char*>(lua_tostring(L,-2));
-		auto len = static_cast<int>(lua_tointeger(L, -1));
+		size_t rellen = 0;
+		auto data = reinterpret_cast<const unsigned char*>(lua_tolstring(L,-2, &rellen));
+		auto len = static_cast<size_t>(lua_tointeger(L, -1));
 		Application::instance().write(data, len);
 		return 0;
 	}

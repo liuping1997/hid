@@ -33,6 +33,7 @@ namespace Lua
 			if (fs::exists(p))
 				path = p;
 		}
+		spdlog::info(fs::absolute(path).string());
 		if (luaL_loadfile(L, path.c_str()))
 		{
 			lua_actived = false;
@@ -40,8 +41,7 @@ namespace Lua
 			return;
 		}
 		lua_actived = true;
-		int ret = lua_pcall(L, 0, 0, 0);
-		ret = lua_getglobal(L, "init");
+		int ret = lua_getglobal(L, "init");
 		if (lua_pcall(L, 0, 0, 0))
 		{
 			spdlog::info(lua_tostring(L, -1));
@@ -60,14 +60,14 @@ namespace Lua
 		Lua::L = l;
 	}
 
-	void call(const char* func,int nresults)
+	void call(const char* func)
 	{
 		if (!lua_actived)
 			return;
 		try
 		{
 			int ret = lua_getglobal(L, func);
-			if (lua_pcall(L, 0, nresults, 0))
+			if (lua_pcall(L, 0, 0, 0))
 			{
 				spdlog::info(lua_tostring(L, -1));
 				throw("lua error");
@@ -76,16 +76,33 @@ namespace Lua
 		catch (...)
 		{
 			lua_actived = false;
-			spdlog::error("lua runtime error.");
+			spdlog::error("lua runtime error.", __FUNCTION__);
 		}
 	}
 
-	void call(const char* func)
+	void call(const char* func, double arg, int nresults)
 	{
-		call(func, 0);
+		if (!lua_actived)
+			return;
+		try
+		{
+			int ret = lua_getglobal(L, func);
+			lua_pushnumber(L, arg);
+
+			if (lua_pcall(L, 1, 0, 0))
+			{
+				spdlog::info(lua_tostring(L, -1));
+				throw("lua error");
+			}
+		}
+		catch (...)
+		{
+			lua_actived = false;
+			spdlog::error("lua runtime error.", __FUNCTION__);
+		}
 	}
 
-	void call(const char* func, int arg1, int arg2, int nresults)
+	void call2Args(const char* func, int arg1, int arg2, int nresults)
 	{
 		if (!lua_actived)
 			return;
@@ -96,8 +113,8 @@ namespace Lua
 			lua_pushinteger(L, arg2);
 			if (lua_pcall(L, 2, nresults, 0))
 			{
-				throw("lua error");
 				spdlog::info(lua_tostring(L, -1));
+				throw("lua error");
 			}
 		}
 		catch (...)

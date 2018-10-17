@@ -6,6 +6,10 @@
 #include <Windows.h>
 #include <conio.h>
 #include <filesystem>
+#include <chrono>
+
+using namespace std;
+using namespace chrono;
 
 namespace fs = std::filesystem;
 std::shared_ptr<Application> app;
@@ -47,9 +51,13 @@ int main (int argc, char **argv)
 	app.reset(&Application::instance());
 	app->initialize();
 	spdlog::info("\n[1] open\n[2] close\n[3] read\n[4] write\n[5] print\n[c] clear & help\n[q] quit\n");
+	time_point<system_clock> start = system_clock::now();
 	while (true)
 	{
-		Lua::call("event_loop");
+		auto now = system_clock::now();
+		duration<double> diff = now - start;
+		start = now;
+		Lua::call("event_loop", diff.count(), 0);
 		if (_kbhit())
 		{
 			char c = _getch();

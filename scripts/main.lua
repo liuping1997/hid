@@ -1,9 +1,28 @@
 local app = require("app")
 local console = require("console")
+--local tween = require("tween")
 -- 读缓冲区
 local rbuf = {}
 -- 设备状态
 local status = {on = "开", off = "关", lay = "放置", leave = "取走", checked = "选中", unchecked = "未选"}
+local devices = {
+	motor = {
+		cmd = 0xAA,
+		len = 0x09,
+		type = "byte",
+		data = "0"
+	},
+	led = {
+		cmd = 0xAB,
+		len = 0x03,
+		data = "0"
+	},
+	marquee = {
+		cmd = 0xAC,
+		len = 0x05,
+		data = "0"
+	}
+}
 
 function init()
 	print("lua init")
@@ -13,8 +32,10 @@ function init()
 	console.set_buffer_size(120, 40)
 end
 
-function event_loop()
+function event_loop(dt)
 	--print("event_loop")
+	print("dt:" .. dt)
+	--tween:update(dt)
 	read_hid()
 	print_hid()
 end
@@ -98,7 +119,71 @@ function print_hid()
 end
 
 function write_hid()
-	print("test_write")
+	-- 电机控制
+	write_cmd("motor", 500, 1000, 200)
+	-- Led控制
+	write_cmd("led", 0, 50, 0, 0)
+	-- 跑马灯控制
+	write_cmd("marquee", 0, 50, 10, 0)
+end
+
+function write_cmd(d, len)
+end
+
+function parse_short(d)
+	local high = d >> 4
+	local low = d & 0xf
+	return low, high
+end
+
+function write_cmd(name, id, data1, data2, data3)
+	local device = devices[name]
+	local len = device.len
+	local type = device.type
+	buf[0] = device.cmd
+	buf[1] = id
+	if type == "byte" then
+		buf[2] = data1
+		buf[3] = data2
+		buf[4] = data3
+	else
+		buf[2], buf[3] = parse_short(data1)
+		buf[4], buf[5] = parse_short(data2)
+		buf[6], buf[7] = parse_short(data3)
+	end
+	local d = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	local buf = string.char(d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[l0])
+	return app.write_hid(buf, len)
+end
+
+-- 设置马达
+function write_cmd_motor(id, short1, short2, short3)
+	local len = 0x09
+	buf[0] = 0xaa
+	buf[1] = id
+	buf[2], buf[3] = parse_short(short1)
+	buf[4], buf[5] = parse_short(short2)
+	buf[6], buf[7] = parse_short(short3)
+	return write_cmd(buf, len)
+end
+
+-- 设置Led
+function write_cmd_led(id, byte)
+	local len = 0x03
+	buf[0] = 0xab
+	buf[1] = id
+	buf[2] = byte
+	return write_cmd(buf, len)
+end
+
+-- 设置跑马灯
+function write_cmd_marquee(id, byte1, byte2)
+	local len = 0x05
+	buf[0] = 0xac
+	buf[1] = id
+	buf[2] = byte1
+	buf[3] = byte2
+	return write_cmd(buf, len)
 end
 
 function read_hid()
