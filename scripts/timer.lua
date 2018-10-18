@@ -90,6 +90,13 @@ function Timer:cancel(handle)
 	self.functions[handle] = nil
 end
 
+function Timer:valid(handle)
+	if self.functions[handle] == true then
+		return true
+	end
+	return false
+end
+
 function Timer:clear()
 	self.functions = {}
 end

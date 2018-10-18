@@ -164,9 +164,8 @@ function parse_short(d)
 	if d == nil then
 		return 0
 	end
-	local high = d >> 4
-	local low = d & 0xf
-	return low, high
+	d = d & 0xffff
+	return d >> 8, d & 0xff
 end
 
 function write_cmd(name, id, data1, data2, data3)
@@ -185,14 +184,15 @@ function write_cmd(name, id, data1, data2, data3)
 	d[1] = device.cmd
 	d[2] = id
 	if type == "byte" then
-		d[3] = data1
-		d[4] = data2
-		d[5] = data3
+		d[3] = data1 & 0xf
+		d[4] = data2 & 0xf
+		d[5] = data3 & 0xf
 	else
 		d[3], d[4] = parse_short(data1)
 		d[5], d[6] = parse_short(data2)
 		d[7], d[8] = parse_short(data3)
 	end
+	--print(name, type, data1, data2, data3, d[1], d[2], d[3], d[4])
 	device.data = string.char(d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10])
 	return app.write(device.data, len)
 end
@@ -258,10 +258,21 @@ function test_read_hid()
 	print(string.format("body:%d %d %d %d %d %d %d", rbuf[32], rbuf[33], rbuf[34], rbuf[35], rbuf[36], rbuf[37], 0))
 end
 
+local motor_power = {state = false}
+local led_power = {state = false}
+local marquee_power = {state = false}
+
 function test_write_hid()
+	-- 防止重入
+	if motor_power.state == true or led_power.state == true or marquee_power.state == true then
+		print("正在测试中,请稍等...")
+		return
+	end
+
 	-- 电机控制
-	motor_power = {a = 0, b = 0, c = 0}
-	timer.every(
+	motor_power = {a = 0, b = 0, c = 0, state = true}
+	local motor_timer =
+		timer.every(
 		0.1,
 		function()
 			write_cmd("motor", 0x7, motor_power.a, motor_power.b, motor_power.c)
@@ -272,17 +283,25 @@ function test_write_hid()
 
 	local motor_move1, motor_move2
 	motor_move1 = function()
-		timer.tween(4, motor_power, {a = 2048, b = 2048, c = 2048}, "linear", motor_move2)
+		if timer.valid(motor_timer) == true then
+			timer.tween(4, motor_power, {a = 2048, b = 2048, c = 2048}, "linear", motor_move2)
+		else
+			motor_power.state = false
+		end
 	end
 	motor_move2 = function()
+		if motor_power.state == false then
+			return
+		end
 		timer.tween(4, motor_power, {a = 0, b = 0, c = 0}, "linear", motor_move1)
 	end
 	motor_move1()
 	motor_move2()
 
 	-- Led控制
-	led_power = {a = 0, b = 0}
-	timer.every(
+	led_power = {a = 0, b = 0, state = true}
+	local led_timer =
+		timer.every(
 		0.1,
 		function()
 			local a = math.ceil(led_power.a)
@@ -295,30 +314,45 @@ function test_write_hid()
 
 	local led_move1, led_move2
 	led_move1 = function()
-		timer.tween(4, led_power, {a = 0xf, b = 0xf}, "linear", led_move2)
+		if timer.valid(led_timer) == true then
+			timer.tween(4, led_power, {a = 0xf, b = 0xf}, "linear", led_move2)
+		else
+			led_power.state = false
+		end
 	end
 	led_move2 = function()
+		if led_power.state == false then
+			return
+		end
 		timer.tween(4, led_power, {a = 0, b = 0}, "linear", led_move1)
 	end
 	led_move1()
 	led_move2()
 
 	-- 跑马灯控制
-	marquee_power = {a = 0, b = 0}
-	timer.every(
+	marquee_power = {a = 0, b = 0, state}
+	local marquee_timer =
+		timer.every(
 		0.1,
 		function()
 			write_cmd("marquee", 0x3, marquee_power.a, marquee_power.b, 0)
-			print("marquee power:", marquee_power.a, marquee_power.b, 0)
+			--print("marquee power:", marquee_power.a, marquee_power.b, 0)
 		end,
 		50
 	)
 
 	local marquee_move1, marquee_move2
 	marquee_move1 = function()
-		timer.tween(4, marquee_power, {a = 0xff, b = 0xff}, "linear", marquee_move2)
+		if timer.valid(marquee_timer) == true then
+			timer.tween(4, marquee_power, {a = 0xff, b = 0xff}, "linear", marquee_move2)
+		else
+			marquee_power.state = false
+		end
 	end
 	marquee_move2 = function()
+		if marquee_power.state == false then
+			return
+		end
 		timer.tween(4, marquee_power, {a = 0, b = 0}, "linear", marquee_move1)
 	end
 	marquee_move1()
