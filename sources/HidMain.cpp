@@ -15,6 +15,9 @@ using namespace chrono;
 namespace fs = std::filesystem;
 std::shared_ptr<Application> app;
 
+using ushort = unsigned short;
+using uchar = unsigned char;
+
 extern "C"
 {
 	bool OpenDevice(unsigned short usVID, unsigned short usPID)
@@ -32,12 +35,12 @@ extern "C"
 		app->getHID()->reset();
 	}
 
-	void WriteCmd(unsigned char *wbuf,int len)
+	void WriteCmd(uchar *wbuf,int len)
 	{
 		app->write(wbuf, len);
 	}
 
-	void ReadCmd(unsigned char cmd, int len)
+	void ReadCmd(uchar cmd, int len)
 	{
 		app->read(cmd, len);
 	}

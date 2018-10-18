@@ -31,6 +31,10 @@ extern "C"{
 
 #define HID_MAX_PACKET_SIZE_EP 64
 
+using ushort = unsigned short;
+using uchar = unsigned char;
+using uint = unsigned int;
+
 class CHidIO {
 	
 protected:
@@ -45,25 +49,26 @@ public:
 	CHidIO();
 	~CHidIO();
 	void CloseDevice();
-	BOOL OpenDevice(BOOL bUseTwoHandle, USHORT usVID,USHORT usPID);
-	BOOL ReadFile(unsigned char *pcBuffer, size_t szMaxLen, DWORD *pdwLength, DWORD dwMilliseconds);
-	BOOL WriteFile(unsigned char *pcBuffer, size_t szLen, DWORD *pdwLength, DWORD dwMilliseconds);
+	BOOL OpenDevice(BOOL bUseTwoHandle, ushort usVID,ushort usPID);
+	BOOL ReadFile(uchar *pcBuffer, size_t szMaxLen, DWORD *pdwLength, DWORD dwMilliseconds);
+	BOOL WriteFile(uchar *pcBuffer, size_t szLen, DWORD *pdwLength, DWORD dwMilliseconds);
 };
 
-class CHidCmd {
+class CHidCmd
+{
 
 protected:
-	unsigned char m_acBuffer[HID_MAX_PACKET_SIZE_EP];
-	UCHAR	m_ucCmdIndex;
-	BOOL	m_bCmdError;
-	CHidIO	m_hidIO;
+	uchar m_acBuffer[HID_MAX_PACKET_SIZE_EP];
+	uchar m_ucCmdIndex;
+	BOOL m_bCmdError;
+	CHidIO m_hidIO;
 public:
 	 CHidCmd();
 	 ~CHidCmd();
 	 void CloseDevice();
-	 BOOL OpenDevice(USHORT usVID, USHORT usPID);
-	 BOOL ReadFile(unsigned char *pcBuffer,size_t szMaxLen,DWORD *pdwLength,DWORD dwMilliseconds);
-	 BOOL WriteFile( unsigned char *pcBuffer ,DWORD dwLen ,DWORD *pdwLength ,DWORD dwMilliseconds);
+	 BOOL OpenDevice(ushort usVID, ushort usPID);
+	 BOOL ReadFile(uchar *pcBuffer,size_t szMaxLen,DWORD *pdwLength,DWORD dwMilliseconds);
+	 BOOL WriteFile( uchar *pcBuffer ,DWORD dwLen ,DWORD *pdwLength ,DWORD dwMilliseconds);
 	 BOOL IsCmdError();
-	 USHORT CRC16(unsigned char *puchMsgg,DWORD usDataLen);
+	 ushort CRC16(uchar *puchMsgg,DWORD usDataLen);
 };

@@ -14,6 +14,8 @@ using namespace chrono;
 class Application
 {
 	using uchar = unsigned char;
+	using ushort = unsigned short;
+	using uint = unsigned int;
 
 private:
 	shared_ptr<CHidDevice> mHID = make_shared<CHidDevice>();

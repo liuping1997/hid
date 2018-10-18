@@ -12,6 +12,13 @@ using std::endl;
 
 #pragma warning(disable:4267)
 
+char* ConvertErrorCodeToString(DWORD ErrorCode)
+{
+	HLOCAL LocalAddress = NULL;
+	FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
+		NULL, ErrorCode, 0, (PTSTR)&LocalAddress, 0, NULL);
+	return (LPSTR)LocalAddress;
+}
 
 CHidIO::CHidIO():m_hReadHandle(INVALID_HANDLE_VALUE)
 		,m_hWriteHandle(INVALID_HANDLE_VALUE)
@@ -64,7 +71,7 @@ void CHidIO::CloseDevice()
 	}
 }
 
-BOOL CHidIO::OpenDevice(BOOL bUseTwoHandle, USHORT usVID,USHORT usPID)
+BOOL CHidIO::OpenDevice(BOOL bUseTwoHandle, ushort usVID,ushort usPID)
 {
 	m_bUseTwoHandle = bUseTwoHandle;
 
@@ -243,7 +250,7 @@ BOOL CHidIO::OpenDevice(BOOL bUseTwoHandle, USHORT usVID,USHORT usPID)
 	return MyDevFound;
 }
 
-BOOL CHidIO::ReadFile(unsigned char *pcBuffer, size_t szMaxLen, DWORD *pdwLength, DWORD dwMilliseconds)
+BOOL CHidIO::ReadFile(uchar *pcBuffer, size_t szMaxLen, DWORD *pdwLength, DWORD dwMilliseconds)
 {
 	HANDLE events[2] = {m_hAbordEvent,m_hReadEvent};
 
@@ -298,7 +305,7 @@ BOOL CHidIO::ReadFile(unsigned char *pcBuffer, size_t szMaxLen, DWORD *pdwLength
 	return TRUE;
 }
 
-BOOL CHidIO::WriteFile(unsigned char *pcBuffer, size_t szLen, DWORD *pdwLength, DWORD dwMilliseconds)
+BOOL CHidIO::WriteFile(uchar *pcBuffer, size_t szLen, DWORD *pdwLength, DWORD dwMilliseconds)
 {
 	HANDLE events[2] = {m_hAbordEvent, m_hWriteEvent};
 
@@ -341,10 +348,11 @@ BOOL CHidIO::WriteFile(unsigned char *pcBuffer, size_t szLen, DWORD *pdwLength, 
 }
 
 
-CHidCmd::CHidCmd():m_ucCmdIndex(18) //Do not use 0 to avoid firmware alrady has index 0 occasionally.
+CHidCmd::CHidCmd()
+		:m_ucCmdIndex(18) //Do not use 0 to avoid firmware alrady has index 0 occasionally.
 		,m_hidIO()
 {
-	memset(m_acBuffer,0x00,sizeof(m_acBuffer));
+	memset(m_acBuffer, 0x00, sizeof(m_acBuffer));
 }
 
 CHidCmd::~CHidCmd()
@@ -357,15 +365,15 @@ void  CHidCmd::CloseDevice()
 	m_hidIO.CloseDevice();
 }
 
-BOOL  CHidCmd:: OpenDevice(USHORT usVID, USHORT usPID)
+BOOL  CHidCmd:: OpenDevice(ushort usVID, ushort usPID)
 {
 	return m_hidIO.OpenDevice(TRUE,usVID,usPID);
 }
 
-BOOL CHidCmd:: ReadFile(unsigned char *pcBuffer,size_t szMaxLen,DWORD *pdwLength,DWORD dwMilliseconds)
+BOOL CHidCmd:: ReadFile(uchar *pcBuffer,size_t szMaxLen,DWORD *pdwLength,DWORD dwMilliseconds)
 {
 	DWORD dwStart = GetTickCount();
-	USHORT crc=0,crc_pack=0;
+	ushort crc=0,crc_pack=0;
 	while(1)
 	{
 		DWORD dwLength;
@@ -377,28 +385,27 @@ BOOL CHidCmd:: ReadFile(unsigned char *pcBuffer,size_t szMaxLen,DWORD *pdwLength
 
 		memset(m_acBuffer, 0, sizeof(m_acBuffer));
 
-		unsigned char* d = m_acBuffer;
+		uchar* d = m_acBuffer;
 
 		if (!m_hidIO.ReadFile(m_acBuffer, sizeof(m_acBuffer), &dwLength, dwMilliseconds))
 		{
-			spdlog::error("read failure!!! {}",szMaxLen,dwMilliseconds);
+			spdlog::error("read failure!!! {} {}", ConvertErrorCodeToString(GetLastError()), szMaxLen);
 			return FALSE;
 		}
-		//Check if correct package index was read
-		//m_acBuffer[0];  //For HID internal usage ,ignored
-		UCHAR ucCmdIndex = ((UCHAR)m_acBuffer[2]&(UCHAR)0x7F);
-		m_bCmdError = (((UCHAR)m_acBuffer[2] & (UCHAR)0x80) == (UCHAR)0x80 ? TRUE : FALSE);
-		DWORD dwCmdLength = (DWORD)(UCHAR)m_acBuffer[5];
-		//=====test
+
+		uchar ucCmdIndex = ((uchar)m_acBuffer[2]&(uchar)0x7F);
+		m_bCmdError = (((uchar)m_acBuffer[2] & (uchar)0x80) == (uchar)0x80 ? TRUE : FALSE);
+		DWORD dwCmdLength = (DWORD)(uchar)m_acBuffer[5];
 		if(dwLength >= 3 && ucCmdIndex == m_ucCmdIndex)
 		{
 			if(dwCmdLength > dwLength - 8 )
 				dwCmdLength = dwLength -8;
 			if(dwCmdLength > szMaxLen)
 				dwCmdLength = szMaxLen;
+
 			//CRC check
-			crc = CRC16(m_acBuffer,dwCmdLength+5);
-			crc_pack =(USHORT)(((UCHAR)m_acBuffer[dwCmdLength+6])<<8) | ((UCHAR)m_acBuffer[dwCmdLength+5]);
+			crc = CRC16(m_acBuffer,dwCmdLength + 5);
+			crc_pack =(ushort)(((uchar)m_acBuffer[dwCmdLength+6])<<8) | ((uchar)m_acBuffer[dwCmdLength+5]);
 			if (crc==crc_pack)
 			{
 				memcpy(pcBuffer, m_acBuffer + 6, dwCmdLength);
@@ -409,46 +416,39 @@ BOOL CHidCmd:: ReadFile(unsigned char *pcBuffer,size_t szMaxLen,DWORD *pdwLength
 			}
 			else
 			{
+				spdlog::info("crc check failure:{} != {}", crc, crc_pack);
 				return FALSE;
 			}
 		}
 	}
 }
 
-BOOL CHidCmd:: WriteFile(unsigned char *pcBuffer ,DWORD dwLen ,DWORD *pdwLength ,DWORD dwMilliseconds)
+BOOL CHidCmd:: WriteFile(uchar *pcBuffer ,DWORD dwLen ,DWORD *pdwLength ,DWORD dwMilliseconds)
 {
-	USHORT crc=0;
-	// Set new package index value
 	++m_ucCmdIndex;
-	m_ucCmdIndex = (m_ucCmdIndex & (UCHAR)0x7F);
+	m_ucCmdIndex = (m_ucCmdIndex & (uchar)0x7F);
 
-	dwLen = std::clamp((int)dwLen,0,64);
+	int len = std::clamp(static_cast<int>(dwLen),1,64);
 
-	DWORD dwCmdLength = dwLen;
+	uchar* buf = m_acBuffer;
+	buf[0] = 0x00; 
+	buf[1] = 0;
+	buf[2] = 0x02;
+	buf[3] = 0;
+	buf[4] = (uchar)len;
+	buf[5] = 0;
+	buf[6] = 0;
+	memcpy(buf + 6, pcBuffer ,len - 1);
+	ushort crc = CRC16(buf,len + 5);
+	buf[len+5]=(uchar)((crc&0xFF00)>>8);
+	buf[len+6]=(uchar)(crc&0x00FF); 
 
-	//Always 0x00
-	m_acBuffer[0] = 0x00; 
-	//package Index
-	m_acBuffer[1] = 0;
-	//board type
-	m_acBuffer[2] = 0x02;
-	m_acBuffer[3] = 0;
-	//valid length
-	m_acBuffer[4] = (UCHAR)dwCmdLength;
-	m_acBuffer[5] = 0;
-	m_acBuffer[6] = 0;
-	m_acBuffer[7] = 0;
-	m_acBuffer[8] = 0;
-	memcpy(m_acBuffer + 6, pcBuffer ,dwLen - 1);
-	crc = CRC16(m_acBuffer,dwCmdLength + 5);
-	m_acBuffer[dwCmdLength+5]=(unsigned char)((crc&0xFF00)>>8);  
-	m_acBuffer[dwCmdLength+6]=(unsigned char)(crc&0x00FF); 
-
-	unsigned char* d = &m_acBuffer[0];
-	BOOL bRet = m_hidIO.WriteFile(m_acBuffer,dwLen + 7,pdwLength,dwMilliseconds);
+	uchar* d = buf;
+	BOOL bRet = m_hidIO.WriteFile(buf, dwLen + 7, pdwLength, dwMilliseconds);
 	if (!bRet)
 	{
-		spdlog::error("write failure!!! {} {}", GetLastError(),dwCmdLength);
+		spdlog::error("[[ {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} ]]", d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10], d[11], d[12], d[13], d[14], d[15]);
+		spdlog::error("write failure--> {} {}", ConvertErrorCodeToString(GetLastError()),len);
 	}
 	return bRet;
 }
@@ -458,8 +458,7 @@ BOOL CHidCmd:: IsCmdError()
 	return m_bCmdError;
 }
 
-
-USHORT CHidCmd::CRC16(unsigned char* data, DWORD len)
+ushort CHidCmd::CRC16(uchar* data, DWORD len)
 {
 	/*
 	name    polynomial  initial val  reverse byte ? reverse result ? swap result ?
