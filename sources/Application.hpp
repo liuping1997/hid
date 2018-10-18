@@ -57,6 +57,7 @@ public:
 
 	void closeDevice()
 	{
+		spdlog::info("close hid success");
 		mHID->close();
 	}
 

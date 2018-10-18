@@ -1,10 +1,10 @@
-package.path = "../../scripts/?.lua;./scripts/?.lua"..package.path
+package.path = "../../scripts/?.lua;./scripts/?.lua" .. package.path
 
 local app = require("app")
 local console = require("console")
-local tween = require("tween")
+local timer = require("timer")
 -- 读缓冲区
-local rbuf = {}
+local rbuf = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 local validhid = false
 -- 设备状态
 local status = {on = "开", off = "关", lay = "放置", leave = "取走", checked = "选中", unchecked = "未选"}
@@ -12,18 +12,23 @@ local devices = {
 	motor = {
 		cmd = 0xAA,
 		len = 0x09,
-		type = "byte",
-		data = "0"
+		type = "short",
+		data = "0",
+		tween = {}
 	},
 	led = {
 		cmd = 0xAB,
 		len = 0x03,
-		data = "0"
+		type = "byte",
+		data = "0",
+		tween = {}
 	},
 	marquee = {
 		cmd = 0xAC,
 		len = 0x05,
-		data = "0"
+		type = "byte",
+		data = "0",
+		tween = {}
 	}
 }
 
@@ -38,11 +43,11 @@ function try(block)
 	-- try to call it
 	local ok, errors = xpcall(main, debug.traceback)
 	if not ok then
-	-- run the catch function
-	if catch then
-	catch(errors)
+		-- run the catch function
+		if catch then
+			catch(errors)
+		end
 	end
-end
 
 	-- run the finally function
 	if finally then
@@ -64,16 +69,17 @@ function init()
 end
 
 function event_loop(dt)
-	try{
-		main = function ()
+	try {
+		main = function()
 			read_hid()
 			print_hid()
+			timer.update(dt)
 		end,
-		catch = function (errors)
+		catch = function(errors)
 			print("catch : " .. errors)
 		end,
-		finally = function (ok, errors)
-		end,
+		finally = function(ok, errors)
+		end
 	}
 	--print("dt:" .. dt)
 end
@@ -83,7 +89,6 @@ function open_hid()
 end
 
 function close_hid()
-	print("test_close")
 	validhid = false
 	app.close()
 end
@@ -155,16 +160,10 @@ function print_hid()
 	console.print(x, 11, string.format("%s:%s %s %d %d %d", "注射器:", is_checked(b[37]), is_leaved(b[37]), to_short(b[38], b[39]), to_byte(b[40]), to_byte(b[41])))
 end
 
-function write_hid()
-	-- 电机控制
-	write_cmd("motor", 0, 500, 1000, 200)
-	-- Led控制
-	write_cmd("led", 0, 50, 0, 0)
-	-- 跑马灯控制
-	write_cmd("marquee", 0, 50, 10, 0)
-end
-
 function parse_short(d)
+	if d == nil then
+		return 0
+	end
 	local high = d >> 4
 	local low = d & 0xf
 	return low, high
@@ -174,6 +173,11 @@ function write_cmd(name, id, data1, data2, data3)
 	if validhid == false then
 		return
 	end
+
+	data1 = math.ceil(data1)
+	data2 = math.ceil(data2)
+	data3 = math.ceil(data3)
+
 	local device = devices[name]
 	local len = device.len
 	local type = device.type
@@ -181,16 +185,16 @@ function write_cmd(name, id, data1, data2, data3)
 	d[1] = device.cmd
 	d[2] = id
 	if type == "byte" then
-		d[3] = data1 & 0xf
-		d[4] = data2 & 0xf
-		d[5] = data3 & 0xf
+		d[3] = data1
+		d[4] = data2
+		d[5] = data3
 	else
 		d[3], d[4] = parse_short(data1)
 		d[5], d[6] = parse_short(data2)
 		d[7], d[8] = parse_short(data3)
 	end
-	local bytes = string.char(d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10])
-	return app.write(bytes, len)
+	device.data = string.char(d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10])
+	return app.write(device.data, len)
 end
 
 function read_hid()
@@ -200,45 +204,123 @@ function read_hid()
 	local cmd = 0xb5
 	local len = 0x26
 	local buf = app.read(cmd, len)
-	local b = rbuf
 	-- shift array + 1
-	b[01],
-		b[01],
-		b[02],
-		b[03],
-		b[04],
-		b[05],
-		b[06],
-		b[07],
-		b[08],
-		b[09],
-		b[10],
-		b[11],
-		b[12],
-		b[13],
-		b[14],
-		b[15],
-		b[16],
-		b[17],
-		b[18],
-		b[19],
-		b[20],
-		b[21],
-		b[22],
-		b[23],
-		b[24],
-		b[25],
-		b[26],
-		b[27],
-		b[28],
-		b[29],
-		b[30],
-		b[31],
-		b[32],
-		b[33],
-		b[34],
-		b[35],
-		b[36],
-		b[37],
-		b[38] = string.byte(buf, 1, len)
+	rbuf[01],
+		rbuf[01],
+		rbuf[02],
+		rbuf[03],
+		rbuf[04],
+		rbuf[05],
+		rbuf[06],
+		rbuf[07],
+		rbuf[08],
+		rbuf[09],
+		rbuf[10],
+		rbuf[11],
+		rbuf[12],
+		rbuf[13],
+		rbuf[14],
+		rbuf[15],
+		rbuf[16],
+		rbuf[17],
+		rbuf[18],
+		rbuf[19],
+		rbuf[20],
+		rbuf[21],
+		rbuf[22],
+		rbuf[23],
+		rbuf[24],
+		rbuf[25],
+		rbuf[26],
+		rbuf[27],
+		rbuf[28],
+		rbuf[29],
+		rbuf[30],
+		rbuf[31],
+		rbuf[32],
+		rbuf[33],
+		rbuf[34],
+		rbuf[35],
+		rbuf[36],
+		rbuf[37],
+		rbuf[38],
+		rbuf[39],
+		rbuf[40],
+		rbuf[41] = string.byte(buf, 1, len)
+end
+
+function test_read_hid()
+	read_hid()
+	print(string.format("head:%d %d %d %d %d %d %d", rbuf[1], rbuf[2], rbuf[3], rbuf[4], rbuf[5], rbuf[6], rbuf[7]))
+	print(string.format("body:%d %d %d %d %d %d %d %d", rbuf[8], rbuf[9], rbuf[10], rbuf[11], rbuf[12], rbuf[13], rbuf[14], rbuf[15]))
+	print(string.format("body:%d %d %d %d %d %d %d %d", rbuf[16], rbuf[17], rbuf[18], rbuf[19], rbuf[20], rbuf[21], rbuf[22], rbuf[23]))
+	print(string.format("body:%d %d %d %d %d %d %d %d", rbuf[24], rbuf[25], rbuf[26], rbuf[27], rbuf[28], rbuf[29], rbuf[30], rbuf[31]))
+	print(string.format("body:%d %d %d %d %d %d %d", rbuf[32], rbuf[33], rbuf[34], rbuf[35], rbuf[36], rbuf[37], 0))
+end
+
+function test_write_hid()
+	-- 电机控制
+	motor_power = {a = 0, b = 0, c = 0}
+	timer.every(
+		0.1,
+		function()
+			write_cmd("motor", 0x7, motor_power.a, motor_power.b, motor_power.c)
+			print("motor power:", motor_power.a, motor_power.b, motor_power.c)
+		end,
+		50
+	)
+
+	local motor_move1, motor_move2
+	motor_move1 = function()
+		timer.tween(4, motor_power, {a = 2048, b = 2048, c = 2048}, "linear", motor_move2)
+	end
+	motor_move2 = function()
+		timer.tween(4, motor_power, {a = 0, b = 0, c = 0}, "linear", motor_move1)
+	end
+	motor_move1()
+	motor_move2()
+
+	-- Led控制
+	led_power = {a = 0, b = 0}
+	timer.every(
+		0.1,
+		function()
+			local a = math.ceil(led_power.a)
+			local data = (a << 1) + led_power.b
+			write_cmd("led", 0x7, data, 0, 0)
+			print("led power:", led_power.a, led_power.b, data)
+		end,
+		50
+	)
+
+	local led_move1, led_move2
+	led_move1 = function()
+		timer.tween(4, led_power, {a = 0xf, b = 0xf}, "linear", led_move2)
+	end
+	led_move2 = function()
+		timer.tween(4, led_power, {a = 0, b = 0}, "linear", led_move1)
+	end
+	led_move1()
+	led_move2()
+
+	-- 跑马灯控制
+	marquee_power = {a = 0, b = 0}
+	timer.every(
+		0.1,
+		function()
+			write_cmd("marquee", 0x3, marquee_power.a, marquee_power.b, 0)
+			print("marquee power:", marquee_power.a, marquee_power.b, 0)
+		end,
+		50
+	)
+
+	local marquee_move1, marquee_move2
+	marquee_move1 = function()
+		timer.tween(4, marquee_power, {a = 0xff, b = 0xff}, "linear", marquee_move2)
+	end
+	marquee_move2 = function()
+		timer.tween(4, marquee_power, {a = 0, b = 0}, "linear", marquee_move1)
+	end
+	marquee_move1()
+	marquee_move2()
 end

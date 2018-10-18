@@ -72,19 +72,23 @@ int main (int argc, char **argv)
 			}
 			else if (c == '1')
 			{
+				spdlog::info("test hid open");
 				Lua::call("open_hid");
 			}
 			else if (c == '2')
 			{
+				spdlog::info("test hid close");
 				Lua::call("close_hid");
 			}
 			else if (c == '3')
 			{
-				Lua::call("read_hid");
+				spdlog::info("test hid read");
+				Lua::call("test_read_hid");
 			}
 			else if (c == '4')
 			{
-				Lua::call("write_hid");
+				spdlog::info("test hid write");
+				Lua::call("test_write_hid");
 			}
 			else if (c == '5')
 			{

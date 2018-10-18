@@ -33,6 +33,7 @@ namespace Lua
 			if (fs::exists(p))
 				path = p;
 		}
+		spdlog::info("lua path:{0}", fs::absolute(path).generic_string());
 		if (luaL_loadfile(L, path.c_str()) != LUA_OK)
 		{
 			lua_actived = false;
