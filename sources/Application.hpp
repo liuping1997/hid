@@ -6,8 +6,10 @@
 #include "ScriptAPI/ScriptCore.hpp"
 #include <filesystem>
 #include <lua.hpp>
+#include <chrono>
 
 using namespace std;
+using namespace chrono;
 
 class Application
 {
@@ -73,10 +75,14 @@ public:
 	
 	void write(const uchar *cmd,int len)
 	{
+		auto now = system_clock::now();
 		CHidDevice::Buffer buf;
 		memcpy_s(buf.data(), len, cmd, len);
 		buf[buf.size() - 1] = len;
 		mHID->write(std::move(buf));
+		auto start = system_clock::now();
+		duration<double> diff = start - now;
+		spdlog::info("write:", diff.count());
 	}
 };
 

@@ -1,78 +1,17 @@
-// HidSdk.cpp : Defines the exported functions for the DLL application.
+ï»¿// HidSdk.cpp : Defines the exported functions for the DLL application.
 //
 
+#include "HidSdk.hpp"
+#include "Logger.hpp"
+#include  <boost/crc.hpp>
 #include <Windows.h>
 #include <iostream>
-#include "HidSdk.hpp"
 
 using std::cout;
 using std::endl;
 
 #pragma warning(disable:4267)
 
-namespace ComData {
-
-	static unsigned char auchCRCHi[] = {
-		0x00,0xC1,0x81,0x40,0x01,0xC0,0x80,0x41,0x01,0xC0,
-		0x80,0x41,0x00,0xC1,0x81,0x40,0x01,0xC0,0x80,0x41,
-		0x00,0xC1,0x81,0x40,0x00,0xC1,0x81,0x40,0x01,0xC0,
-		0x80,0x41,0x01,0xC0,0x80,0x41,0x00,0xC1,0x81,0x40,
-		0x00,0xC1,0x81,0x40,0x01,0xC0,0x80,0x41,0x00,0xC1,
-		0x81,0x40,0x01,0xC0,0x80,0x41,0x01,0xC0,0x80,0x41,
-		0x00,0xC1,0x81,0x40,0x01,0xC0,0x80,0x41,0x00,0xC1,
-		0x81,0x40,0x00,0xC1,0x81,0x40,0x01,0xC0,0x80,0x41,
-		0x00,0xC1,0x81,0x40,0x01,0xC0,0x80,0x41,0x01,0xC0,
-		0x80,0x41,0x00,0xC1,0x81,0x40,0x00,0xC1,0x81,0x40,
-		0x01,0xC0,0x80,0x41,0x01,0xC0,0x80,0x41,0x00,0xC1,
-		0x81,0x40,0x01,0xC0,0x80,0x41,0x00,0xC1,0x81,0x40,
-		0x00,0xC1,0x81,0x40,0x01,0xC0,0x80,0x41,0x01,0xC0,
-		0x80,0x41,0x00,0xC1,0x81,0x40,0x00,0xC1,0x81,0x40,
-		0x01,0xC0,0x80,0x41,0x00,0xC1,0x81,0x40,0x01,0xC0,
-		0x80,0x41,0x01,0xC0,0x80,0x41,0x00,0xC1,0x81,0x40,
-		0x00,0xC1,0x81,0x40,0x01,0xC0,0x80,0x41,0x01,0xC0,
-		0x80,0x41,0x00,0xC1,0x81,0x40,0x01,0xC0,0x80,0x41,
-		0x00,0xC1,0x81,0x40,0x00,0xC1,0x81,0x40,0x01,0xC0,
-		0x80,0x41,0x00,0xC1,0x81,0x40,0x01,0xC0,0x80,0x41,
-		0x01,0xC0,0x80,0x41,0x00,0xC1,0x81,0x40,0x01,0xC0,
-		0x80,0x41,0x00,0xC1,0x81,0x40,0x00,0xC1,0x81,0x40,
-		0x01,0xC0,0x80,0x41,0x01,0xC0,0x80,0x41,0x00,0xC1,
-		0x81,0x40,0x00,0xC1,0x81,0x40,0x01,0xC0,0x80,0x41,
-		0x00,0xC1,0x81,0x40,0x01,0xC0,0x80,0x41,0x01,0xC0,
-		0x80,0x41,0x00,0xC1,0x81,0x40
-	};
-
-	static unsigned char auchCRCLo[] = {
-		0x00,0xC0,0xC1,0x01,0xC3,0x03,0x02,0xC2,0xC6,0x06,
-		0x07,0xC7,0x05,0xC5,0xC4,0x04,0xCC,0x0C,0x0D,0xCD,
-		0x0F,0xCF,0xCE,0x0E,0x0A,0xCA,0xCB,0x0B,0xC9,0x09,
-		0x08,0xC8,0xD8,0x18,0x19,0xD9,0x1B,0xDB,0xDA,0x1A,
-		0x1E,0xDE,0xDF,0x1F,0xDD,0x1D,0x1C,0xDC,0x14,0xD4,
-		0xD5,0x15,0xD7,0x17,0x16,0xD6,0xD2,0x12,0x13,0xD3,
-		0x11,0xD1,0xD0,0x10,0xF0,0x30,0x31,0xF1,0x33,0xF3,
-		0xF2,0x32,0x36,0xF6,0xF7,0x37,0xF5,0x35,0x34,0xF4,
-		0x3C,0xFC,0xFD,0x3D,0xFF,0x3F,0x3E,0xFE,0xFA,0x3A,
-		0x3B,0xFB,0x39,0xF9,0xF8,0x38,0x28,0xE8,0xE9,0x29,
-		0xEB,0x2B,0x2A,0xEA,0xEE,0x2E,0x2F,0xEF,0x2D,0xED,
-		0xEC,0x2C,0xE4,0x24,0x25,0xE5,0x27,0xE7,0xE6,0x26,
-		0x22,0xE2,0xE3,0x23,0xE1,0x21,0x20,0xE0,0xA0,0x60,
-		0x61,0xA1,0x63,0xA3,0xA2,0x62,0x66,0xA6,0xA7,0x67,
-		0xA5,0x65,0x64,0xA4,0x6C,0xAC,0xAD,0x6D,0xAF,0x6F,
-		0x6E,0xAE,0xAA,0x6A,0x6B,0xAB,0x69,0xA9,0xA8,0x68,
-		0x78,0xB8,0xB9,0x79,0xBB,0x7B,0x7A,0xBA,0xBE,0x7E,
-		0x7F,0xBF,0x7D,0xBD,0xBC,0x7C,0xB4,0x74,0x75,0xB5,
-		0x77,0xB7,0xB6,0x76,0x72,0xB2,0xB3,0x73,0xB1,0x71,
-		0x70,0xB0,0x50,0x90,0x91,0x51,0x93,0x53,0x52,0x92,
-		0x96,0x56,0x57,0x97,0x55,0x95,0x94,0x54,0x9C,0x5C,
-		0x5D,0x9D,0x5F,0x9F,0x9E,0x5E,0x5A,0x9A,0x9B,0x5B,
-		0x99,0x59,0x58,0x98,0x88,0x48,0x49,0x89,0x4B,0x8B,
-		0x8A,0x4A,0x4E,0x8E,0x8F,0x4F,0x8D,0x4D,0x4C,0x8C,
-		0x44,0x84,0x85,0x45,0x87,0x47,0x46,0x86,0x82,0x42,
-		0x43,0x83,0x41,0x81,0x80,0x40
-	};
-
-	//////////////////////////////////////////////////////////////////////////
-
-};
 
 CHidIO::CHidIO():m_hReadHandle(INVALID_HANDLE_VALUE)
 		,m_hWriteHandle(INVALID_HANDLE_VALUE)
@@ -131,94 +70,94 @@ BOOL CHidIO::OpenDevice(BOOL bUseTwoHandle, USHORT usVID,USHORT usPID)
 
 	TCHAR MyDevPathName[MAX_PATH];
 
-	//¶¨ÒåÒ»¸öGUIDµÄ½á¹¹ÌåHidGuidÀ´±£´æHIDÉè±¸µÄ½Ó¿ÚÀàGUID
+	//å®šä¹‰ä¸€ä¸ªGUIDçš„ç»“æ„ä½“HidGuidæ¥ä¿å­˜HIDè®¾å¤‡çš„æ¥å£ç±»GUID
 	GUID HidGuid;
-	//¶¨ÒåÒ»¸öDEVINFOµÄ¾ä±úhDevInfoSetÀ´±£´æ»ñÈ¡µ½µÄÉè±¸ĞÅÏ¢¼¯
+	//å®šä¹‰ä¸€ä¸ªDEVINFOçš„å¥æŸ„hDevInfoSetæ¥ä¿å­˜è·å–åˆ°çš„è®¾å¤‡ä¿¡æ¯é›†
 	HDEVINFO hDevInfoSet;
-	//¶¨ÒåMemberIndex,±íÊ¾µ±Ç°ËÑË÷µ½µÚ¼¸¸öÉè±¸,0±íÊ¾µÚÒ»¸öÉè±¸
+	//å®šä¹‰MemberIndex,è¡¨ç¤ºå½“å‰æœç´¢åˆ°ç¬¬å‡ ä¸ªè®¾å¤‡,0è¡¨ç¤ºç¬¬ä¸€ä¸ªè®¾å¤‡
 	DWORD MemberIndex;
-	//DevInterfaceData,ÓÃÀ´±£´æÉè±¸µÄÇı¶¯½Ó¿ÚĞÅÏ¢
+	//DevInterfaceData,ç”¨æ¥ä¿å­˜è®¾å¤‡çš„é©±åŠ¨æ¥å£ä¿¡æ¯
 	SP_DEVICE_INTERFACE_DATA DevInterfaceData;
-	//¶¨ÒåÒ»¸öBOOL±äÁ¿,±£´æÉè±¸µÄÇı¶¯½Ó¿ÚĞÅÏ¢
+	//å®šä¹‰ä¸€ä¸ªBOOLå˜é‡,ä¿å­˜è®¾å¤‡çš„é©±åŠ¨æ¥å£ä¿¡æ¯
 	BOOL Result;
-	//¶¨ÒåÒ»¸öRequiredSizeµÄ±äÁ¿,ÓÃÀ´½ÓÊÕĞèÒª±£´æÏêÏ¸ĞÅÏ¢µÄ»º³å³¤¶È.
+	//å®šä¹‰ä¸€ä¸ªRequiredSizeçš„å˜é‡,ç”¨æ¥æ¥æ”¶éœ€è¦ä¿å­˜è¯¦ç»†ä¿¡æ¯çš„ç¼“å†²é•¿åº¦.
 	DWORD RequiredSize;
-	//¶¨ÒåÒ»¸öÖ¸ÏòÉè±¸ÏêÏ¸ĞÅÏ¢µÄ½á¹¹ÌåÖ¸Õë
+	//å®šä¹‰ä¸€ä¸ªæŒ‡å‘è®¾å¤‡è¯¦ç»†ä¿¡æ¯çš„ç»“æ„ä½“æŒ‡é’ˆ
 	PSP_DEVICE_INTERFACE_DETAIL_DATA pDevDetailData;
-	//¶¨ÒåÒ»¸öÓÃÀ´±£´æ´ò¿ªÉè±¸µÄ¾ä±ú
+	//å®šä¹‰ä¸€ä¸ªç”¨æ¥ä¿å­˜æ‰“å¼€è®¾å¤‡çš„å¥æŸ„
 	HANDLE hDevHandle;
-	//¶¨ÒåÒ»¸öHIDD_ATTRIBUTESµÄ½á¹¹Ìå±äÁ¿,±£´æÉè±¸µÄÊôĞÔ.
+	//å®šä¹‰ä¸€ä¸ªHIDD_ATTRIBUTESçš„ç»“æ„ä½“å˜é‡,ä¿å­˜è®¾å¤‡çš„å±æ€§.
 	HIDD_ATTRIBUTES DevAttributes;
-	//³õÊ¼»¯Î´ÕÒµ½
+	//åˆå§‹åŒ–æœªæ‰¾åˆ°
 	BOOL MyDevFound = FALSE;
 
-	//³õÊ¼»¯¶Á Ğ´¾ä±úÎªÎŞĞ§¾ä±ú
+	//åˆå§‹åŒ–è¯» å†™å¥æŸ„ä¸ºæ— æ•ˆå¥æŸ„
 	m_hReadHandle = INVALID_HANDLE_VALUE;
 	m_hWriteHandle = INVALID_HANDLE_VALUE;
 
-	//¶ÔDevInterfaceData½á¹¹ÌåµÄcbSize³õÊ¼»¯Îª½á¹¹Ìå´óĞ¡
+	//å¯¹DevInterfaceDataç»“æ„ä½“çš„cbSizeåˆå§‹åŒ–ä¸ºç»“æ„ä½“å¤§å°
 	DevInterfaceData.cbSize = sizeof(DevInterfaceData);
-	//¶ÔDevAttribute½á¹¹ÌåµÄsize³õÊ¼»¯Îª½á¹¹Ìå´óĞ¡
+	//å¯¹DevAttributeç»“æ„ä½“çš„sizeåˆå§‹åŒ–ä¸ºç»“æ„ä½“å¤§å°
 	DevAttributes.Size = sizeof(DevAttributes);
-	//µ÷ÓÃHidGuidÀ´»ñÈ¡Éè±¸HIDÉè±¸µÄGUID,²¢±£´æÔÚHidGuidÖĞ.
+	//è°ƒç”¨HidGuidæ¥è·å–è®¾å¤‡HIDè®¾å¤‡çš„GUID,å¹¶ä¿å­˜åœ¨HidGuidä¸­.
 	HidD_GetHidGuid(&HidGuid);
-	//¸ù¾İHidGuidÀ´»ñÈ¡Éè±¸ĞÅÏ¢¼¯ºÏ,ÆäÖĞFlags²ÎÊıÉèÖÃÎª
-	//DIGCF_DEVICEINTERFACE|DIGCF_PRESENT,Ç°Õß±íÊ¾Ê¹ÓÃµÄGUIDÎª
-	//½Ó¿ÚÀàGUID,ºóÕß±íÊ¾Ö»ÁĞ¾ÙÕıÔÚÊ¹ÓÃµÄÉè±¸,ÒòÎªÎÒÃÇÕâÀïÖ»
-	//²éÕÒÒÑ¾­Á¬½ÓÉÏµÄÉè±¸.·µ»ØµÄ¾ä±ú±£´æÔÚhDevinfoÖĞ,×¢ÒâÉè±¸
-	//ĞÅÏ¢¼¯ºÏÔÚÊ¹ÓÃÍê±Ïºó,ÒªÊ¹ÓÃº¯ÊıSetupDiDestroyDeviceInfoList
-	//Ïú»Ù,²»È»»áÔì³ÉÄÚ´æĞ¹Â©.
+	//æ ¹æ®HidGuidæ¥è·å–è®¾å¤‡ä¿¡æ¯é›†åˆ,å…¶ä¸­Flagså‚æ•°è®¾ç½®ä¸º
+	//DIGCF_DEVICEINTERFACE|DIGCF_PRESENT,å‰è€…è¡¨ç¤ºä½¿ç”¨çš„GUIDä¸º
+	//æ¥å£ç±»GUID,åè€…è¡¨ç¤ºåªåˆ—ä¸¾æ­£åœ¨ä½¿ç”¨çš„è®¾å¤‡,å› ä¸ºæˆ‘ä»¬è¿™é‡Œåª
+	//æŸ¥æ‰¾å·²ç»è¿æ¥ä¸Šçš„è®¾å¤‡.è¿”å›çš„å¥æŸ„ä¿å­˜åœ¨hDevinfoä¸­,æ³¨æ„è®¾å¤‡
+	//ä¿¡æ¯é›†åˆåœ¨ä½¿ç”¨å®Œæ¯•å,è¦ä½¿ç”¨å‡½æ•°SetupDiDestroyDeviceInfoList
+	//é”€æ¯,ä¸ç„¶ä¼šé€ æˆå†…å­˜æ³„æ¼.
 	hDevInfoSet = SetupDiGetClassDevs(&HidGuid,
 		NULL,
 		NULL,
 		DIGCF_DEVICEINTERFACE|DIGCF_PRESENT);
-	//AddToInfOut("¿ªÊ¼²éÕÒÉè±¸");
-	//È»ºó¶ÔÉè±¸¼¯ºÏÖĞÃ¿¸öÉè±¸½øĞĞÁĞ¾Ù,¼ì²éÊÇ·ñÊÇÎÒÃÇÒªÕÒµÄÉè±¸
-	//µ±ÕÒµ½ÎÒÃÇÖ¸¶¨µÄÉè±¸,»ò×ÅÉè±¸ÒÑ¾­²éÕÒÍê±ÏÊ±,¾ÍÍË³ö²éÕÒ.
-	//Ê×ÏÈÖ¸ÏòµÚÒ»¸öÉè±¸,¼´½«MemberIndexÖÃÎª0.
+	//AddToInfOut("å¼€å§‹æŸ¥æ‰¾è®¾å¤‡");
+	//ç„¶åå¯¹è®¾å¤‡é›†åˆä¸­æ¯ä¸ªè®¾å¤‡è¿›è¡Œåˆ—ä¸¾,æ£€æŸ¥æ˜¯å¦æ˜¯æˆ‘ä»¬è¦æ‰¾çš„è®¾å¤‡
+	//å½“æ‰¾åˆ°æˆ‘ä»¬æŒ‡å®šçš„è®¾å¤‡,æˆ–ç€è®¾å¤‡å·²ç»æŸ¥æ‰¾å®Œæ¯•æ—¶,å°±é€€å‡ºæŸ¥æ‰¾.
+	//é¦–å…ˆæŒ‡å‘ç¬¬ä¸€ä¸ªè®¾å¤‡,å³å°†MemberIndexç½®ä¸º0.
 	MemberIndex = 0;
 	while(1)
 	{
-		//µ÷ÓÃSetupDiEnumDeviceInterfaceÔÚÉè±¸ĞÅÏ¢¼¯ºÏÖĞ»ñÈ¡±àºÅÎª
-		//MemberIndexµÄÉè±¸ĞÅÏ¢.
+		//è°ƒç”¨SetupDiEnumDeviceInterfaceåœ¨è®¾å¤‡ä¿¡æ¯é›†åˆä¸­è·å–ç¼–å·ä¸º
+		//MemberIndexçš„è®¾å¤‡ä¿¡æ¯.
 		Result = SetupDiEnumDeviceInterfaces(hDevInfoSet,
 			NULL,
 			&HidGuid,
 			MemberIndex,
 			&DevInterfaceData);
-		//Èç¹û»ñÈ¡ÏÂĞÅÏ¢Ê§°Ü,ÔòËµÃ÷Éè±¸ÒÑ¾­²éÕÒÍê±Ï,ÍË³öÑ­»·.
+		//å¦‚æœè·å–ä¸‹ä¿¡æ¯å¤±è´¥,åˆ™è¯´æ˜è®¾å¤‡å·²ç»æŸ¥æ‰¾å®Œæ¯•,é€€å‡ºå¾ªç¯.
 		if(Result==FALSE) break;
-		//½«MemberIndexÖ¸ÏòÏÂÒ»¸öÉè±¸
+		//å°†MemberIndexæŒ‡å‘ä¸‹ä¸€ä¸ªè®¾å¤‡
 		MemberIndex++;
-		//Èç¹û»ñÈ¡ĞÅÏ¢³É¹¦,Ôò¼ÌĞø»ñÈ¡¸ÃÉè±¸µÄÏêÏ¸ĞÅÏ¢,ÔÚ»ñÈ¡ĞÅÏ¢Ê±
-		//ĞèÑ½ÏÈÖªµÀ±£´æÏêÏ¸ĞÅÏ¢ĞèÒª¶à´óµÄ»º³åÇø,ÕâÍ¨¹ıµÚÒ»´Îµ÷ÓÃº¯Êı
-		//SetupDiGetDeviceInterfaceDetailÀ´»ñÈ¡.ÕâÊ±
-		//Ìá¹©»º³åÇøºÍ³¤¶È¶¼ÎªNULLµÄ²ÎÊı,²¢Ìá¹©Ò»¸öÓÃÀ´±£´æĞèÒª¶à´ó»º³å
-		//ÇøµÄ±äÁ¿RequiredSize.
+		//å¦‚æœè·å–ä¿¡æ¯æˆåŠŸ,åˆ™ç»§ç»­è·å–è¯¥è®¾å¤‡çš„è¯¦ç»†ä¿¡æ¯,åœ¨è·å–ä¿¡æ¯æ—¶
+		//éœ€å‘€å…ˆçŸ¥é“ä¿å­˜è¯¦ç»†ä¿¡æ¯éœ€è¦å¤šå¤§çš„ç¼“å†²åŒº,è¿™é€šè¿‡ç¬¬ä¸€æ¬¡è°ƒç”¨å‡½æ•°
+		//SetupDiGetDeviceInterfaceDetailæ¥è·å–.è¿™æ—¶
+		//æä¾›ç¼“å†²åŒºå’Œé•¿åº¦éƒ½ä¸ºNULLçš„å‚æ•°,å¹¶æä¾›ä¸€ä¸ªç”¨æ¥ä¿å­˜éœ€è¦å¤šå¤§ç¼“å†²
+		//åŒºçš„å˜é‡RequiredSize.
 		Result = SetupDiGetDeviceInterfaceDetail(hDevInfoSet,
 			&DevInterfaceData,
 			NULL,
 			NULL,
 			&RequiredSize,
 			NULL);
-		//È»ºó,·ÖÅäÒ»¸ö´óĞ¡ÎªRequiredSizeµÄ»º³åÇø,
-		//ÓÃÀ´±£´æÉè±¸ÏêÏ¸ĞÅÏ¢.
+		//ç„¶å,åˆ†é…ä¸€ä¸ªå¤§å°ä¸ºRequiredSizeçš„ç¼“å†²åŒº,
+		//ç”¨æ¥ä¿å­˜è®¾å¤‡è¯¦ç»†ä¿¡æ¯.
 		pDevDetailData = 
 			(PSP_DEVICE_INTERFACE_DETAIL_DATA)malloc(RequiredSize);
-		if(pDevDetailData == NULL)//Èç¹ûÄÚ´æ²»×ã,ÔòÖ±½Ó·µ»Ø.
+		if(pDevDetailData == NULL)//å¦‚æœå†…å­˜ä¸è¶³,åˆ™ç›´æ¥è¿”å›.
 		{
-			//MessageBox("ÄÚ´æ²»×ã!");
+			//MessageBox("å†…å­˜ä¸è¶³!");
 			SetupDiDestroyDeviceInfoList(hDevInfoSet);
 			return FALSE;
 		}
 
-		//²¢ÉèÖÃpDevDetailDataµÄcbsizeÎª½á¹¹ÌåµÄ´óĞ¡(×¢ÒâÖ»ÊÇ½á¹¹Ìå´óĞ¡
-		//,²»°üÀ¨ºóÃæ»º³åÇø).
+		//å¹¶è®¾ç½®pDevDetailDataçš„cbsizeä¸ºç»“æ„ä½“çš„å¤§å°(æ³¨æ„åªæ˜¯ç»“æ„ä½“å¤§å°
+		//,ä¸åŒ…æ‹¬åé¢ç¼“å†²åŒº).
 		pDevDetailData->cbSize = 
 			sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA);
-		//È»ºóÔÙ´Îµ÷ÓÃ
-		//SetupDiGetDeviceInterfaceDetailº¯ÊıÀ´»ñÈ¡Éè±¸µÄ
-			//ÏêÏ¸ĞÅÏ¢.Õâ´Îµ÷ÓÃÉèÖÃÊ¹ÓÃµÄ»º³åÇøÒÔ¼°»º³åÇø´óĞ¡.
+		//ç„¶åå†æ¬¡è°ƒç”¨
+		//SetupDiGetDeviceInterfaceDetailå‡½æ•°æ¥è·å–è®¾å¤‡çš„
+			//è¯¦ç»†ä¿¡æ¯.è¿™æ¬¡è°ƒç”¨è®¾ç½®ä½¿ç”¨çš„ç¼“å†²åŒºä»¥åŠç¼“å†²åŒºå¤§å°.
 		Result = SetupDiGetDeviceInterfaceDetail(
 			hDevInfoSet,
 			&DevInterfaceData,
@@ -226,17 +165,17 @@ BOOL CHidIO::OpenDevice(BOOL bUseTwoHandle, USHORT usVID,USHORT usPID)
 			RequiredSize,
 			NULL,
 			NULL);
-		//½«Éè±¸Â·¾¶¸´ÖÆ³öÀ´,È»ºóÏú»Ù¸Õ¸ÕÉêÇëµÄÄÚ´æ.
+		//å°†è®¾å¤‡è·¯å¾„å¤åˆ¶å‡ºæ¥,ç„¶åé”€æ¯åˆšåˆšç”³è¯·çš„å†…å­˜.
 		//MyDevPathName = pDevDetailData->DevicePath;
 		//_tcscpy((char*)MyDevPathName,(char*)pDevDetailData->DevicePath );
 		strcpy_s((char*)MyDevPathName,sizeof(MyDevPathName),(char*)pDevDetailData->DevicePath );
 		free(pDevDetailData);
-		//Èç¹ûµ÷ÓÃÊ§°Ü,Ôò²éÕÒÏÂÒ»¸öÉè±¸.
+		//å¦‚æœè°ƒç”¨å¤±è´¥,åˆ™æŸ¥æ‰¾ä¸‹ä¸€ä¸ªè®¾å¤‡.
 		if(Result == FALSE) continue;
-		//Èç¹ûµ÷ÓÃ³É¹¦,ÔòÊ¹ÓÃ²»´ø¶ÁĞ´·ÃÎÊµÄCreateFileº¯Êı
-		//À´»ñÈ¡Éè±¸µÄÊôĞÔ,°üÀ¨VID PID °æ±¾ºÅµÈ.
-		//¶ÔÓÚÒ»Ğ©¶ÀÕ¼Éè±¸(ÀıÈçusb¼üÅÌ),Ê¹ÓÃ¶ÁĞ´·ÃÎÊ·ÃÎÊ·½Ê½ÊÇÎŞ·¨´ò¿ªµÄ
-		//¶øÊ¹ÓÃ²»´ø¶ÁĞ´·ÃÎÊµÄ¸ñÊ½²Å¿ÉÒÔ´ò¿ªÕâĞ©Éè±¸,´Ó¶ø»ñÈ¡Éè±¸µÄÊôĞÔ.
+		//å¦‚æœè°ƒç”¨æˆåŠŸ,åˆ™ä½¿ç”¨ä¸å¸¦è¯»å†™è®¿é—®çš„CreateFileå‡½æ•°
+		//æ¥è·å–è®¾å¤‡çš„å±æ€§,åŒ…æ‹¬VID PID ç‰ˆæœ¬å·ç­‰.
+		//å¯¹äºä¸€äº›ç‹¬å è®¾å¤‡(ä¾‹å¦‚usbé”®ç›˜),ä½¿ç”¨è¯»å†™è®¿é—®è®¿é—®æ–¹å¼æ˜¯æ— æ³•æ‰“å¼€çš„
+		//è€Œä½¿ç”¨ä¸å¸¦è¯»å†™è®¿é—®çš„æ ¼å¼æ‰å¯ä»¥æ‰“å¼€è¿™äº›è®¾å¤‡,ä»è€Œè·å–è®¾å¤‡çš„å±æ€§.
 		hDevHandle = CreateFile (MyDevPathName,
 			NULL,
 			FILE_SHARE_READ|FILE_SHARE_WRITE,
@@ -245,20 +184,20 @@ BOOL CHidIO::OpenDevice(BOOL bUseTwoHandle, USHORT usVID,USHORT usPID)
 			FILE_ATTRIBUTE_NORMAL,
 			NULL);	
 		
-		//Èç¹û´ò¿ª³É¹¦,Ôò»ñÈ¡Éè±¸ÊôĞÔ
+		//å¦‚æœæ‰“å¼€æˆåŠŸ,åˆ™è·å–è®¾å¤‡å±æ€§
 		if(hDevHandle != INVALID_HANDLE_VALUE)
 		{
-			//»ñÈ¡Éè±¸µÄÊôĞÔ²¢±£´æÔÚDevAttributes½á¹¹ÌåÖĞ
+			//è·å–è®¾å¤‡çš„å±æ€§å¹¶ä¿å­˜åœ¨DevAttributesç»“æ„ä½“ä¸­
 			Result = HidD_GetAttributes(hDevHandle,
 				&DevAttributes);
-			//¹Ø±Õ¸Õ¸Õ´ò¿ªµÄÉè±¸
+			//å…³é—­åˆšåˆšæ‰“å¼€çš„è®¾å¤‡
 			CloseHandle(hDevHandle);
 
-			//»ñÈ¡Ê§°Ü,²éÕÒÏÂÒ»¸ö
+			//è·å–å¤±è´¥,æŸ¥æ‰¾ä¸‹ä¸€ä¸ª
 			if(Result == FALSE) continue;
 
-			//Èç¹û»ñÈ¡³É¹¦,Ôò½«ÊôĞÔÖĞµÄVID/PIdÓëÎÒÃÇĞèÒªµÄ
-			//½øĞĞ±È½Ï,Èç¹ûÒ»ÖÂµÄ»°,ÔòËµÃ÷Ëü¾ÍÊÇÎÒÃÇÒªÕÒµÄÉè±¸.
+			//å¦‚æœè·å–æˆåŠŸ,åˆ™å°†å±æ€§ä¸­çš„VID/PIdä¸æˆ‘ä»¬éœ€è¦çš„
+			//è¿›è¡Œæ¯”è¾ƒ,å¦‚æœä¸€è‡´çš„è¯,åˆ™è¯´æ˜å®ƒå°±æ˜¯æˆ‘ä»¬è¦æ‰¾çš„è®¾å¤‡.
 			if(DevAttributes.VendorID == usVID&&
 				DevAttributes.ProductID == usPID){
 				MyDevFound = TRUE;
@@ -294,13 +233,13 @@ BOOL CHidIO::OpenDevice(BOOL bUseTwoHandle, USHORT usVID,USHORT usPID)
 				break;
 			}
 		}
-		//Èç¹û´ò¿ªÊ§°Ü,Ôò²éÕÒÏÂÒ»¸öÉè±¸
+		//å¦‚æœæ‰“å¼€å¤±è´¥,åˆ™æŸ¥æ‰¾ä¸‹ä¸€ä¸ªè®¾å¤‡
 		else continue;
 	}
-	//µ÷ÓÃSetupDiDestroyDeviceInfoListº¯ÊıÏú»ÙÉè±¸ĞÅÏ¢¼¯ºÏ
+	//è°ƒç”¨SetupDiDestroyDeviceInfoListå‡½æ•°é”€æ¯è®¾å¤‡ä¿¡æ¯é›†åˆ
 	SetupDiDestroyDeviceInfoList(hDevInfoSet);
 
-	//Èç¹ûÉè±¸ÒÑ¾­ÕÒµ½,ÄÇÃ´Ó¦¸ÃÊ¹ÄÜ¸÷ÖÖ²Ù×÷°´Å¥,²¢Í¬Ê±½ûÖ¹´ò¿ªÉè±¸°´Å¥
+	//å¦‚æœè®¾å¤‡å·²ç»æ‰¾åˆ°,é‚£ä¹ˆåº”è¯¥ä½¿èƒ½å„ç§æ“ä½œæŒ‰é’®,å¹¶åŒæ—¶ç¦æ­¢æ‰“å¼€è®¾å¤‡æŒ‰é’®
 	return MyDevFound;
 }
 
@@ -314,23 +253,25 @@ BOOL CHidIO::ReadFile(unsigned char *pcBuffer, size_t szMaxLen, DWORD *pdwLength
 
 	if(pdwLength != NULL)
 		*pdwLength = 0;
-	//if(!::ReadFile(m_hReadHandle, pcBuffer, szMaxLen, NULL, &overlapped))
-	//	return FALSE;
-	if(!::ReadFile(m_hReadHandle, pcBuffer, szMaxLen, NULL, &overlapped))
-	{
 
+	DWORD lpNumberOfBytesRead = 0;
+	if(!::ReadFile(m_hReadHandle, pcBuffer, szMaxLen, &lpNumberOfBytesRead, &overlapped))
+	{
+		spdlog::error("ReadFile Error:{} {}", GetLastError(), szMaxLen,lpNumberOfBytesRead);
 		if(ERROR_IO_PENDING == GetLastError())
 		{
-			DWORD dwIndex = WaitForMultipleObjects(2,events, FALSE, dwMilliseconds);
+			DWORD dwIndex = WaitForMultipleObjects(2, events, FALSE, dwMilliseconds);
 
-			if(dwIndex == WAIT_OBJECT_0  
-				|| dwIndex == WAIT_OBJECT_0 + 1)
+			if(dwIndex == WAIT_OBJECT_0 || dwIndex == WAIT_OBJECT_0 + 1)
 			{
 				ResetEvent(events[dwIndex - WAIT_OBJECT_0]);
 
-				if(dwIndex == WAIT_OBJECT_0 )
+				if (dwIndex == WAIT_OBJECT_0)
+				{
+					spdlog::error("abort event");
 					return FALSE;   //Abort event
-				else
+				}
+				else if (dwIndex == (WAIT_OBJECT_0 + 1))
 				{
 					DWORD dwLength = 0;
 					//Read OK
@@ -341,14 +282,20 @@ BOOL CHidIO::ReadFile(unsigned char *pcBuffer, size_t szMaxLen, DWORD *pdwLength
 				}
 			}
 			else
+			{
+				if (dwIndex == WAIT_TIMEOUT)
+					spdlog::error("ReadFile WaitForMultipleObjects WAIT_TIMEOUT");
+				else if (dwIndex == WAIT_FAILED)
+					spdlog::error("ReadFile WaitForMultipleObjects WAIT_FAILED");
 				return FALSE;
+			}
 		}
 		else
 		{
 			return FALSE;
 		}
 	}
-	return FALSE;
+	return TRUE;
 }
 
 BOOL CHidIO::WriteFile(unsigned char *pcBuffer, size_t szLen, DWORD *pdwLength, DWORD dwMilliseconds)
@@ -367,7 +314,7 @@ BOOL CHidIO::WriteFile(unsigned char *pcBuffer, size_t szLen, DWORD *pdwLength, 
 	if(!::WriteFile(m_hWriteHandle,pcBuffer,szLen,NULL,&overlapped))
 	{
 		err=GetLastError();
-		//cout<<"Last Error is" <<err<<endl;
+		cout<<"Last Error is " <<err<<szLen<<endl;
 		return FALSE;
 	}
 
@@ -427,8 +374,16 @@ BOOL CHidCmd:: ReadFile(unsigned char *pcBuffer,size_t szMaxLen,DWORD *pdwLength
 		m_acBuffer[2] = 0x02; 
 		m_acBuffer[4] = szMaxLen; 
 		m_acBuffer[5] = 0; 
-		if(!m_hidIO.ReadFile(m_acBuffer,sizeof(m_acBuffer),&dwLength,dwMilliseconds))
+
+		memset(m_acBuffer, 0, sizeof(m_acBuffer));
+
+		unsigned char* d = m_acBuffer;
+
+		if (!m_hidIO.ReadFile(m_acBuffer, sizeof(m_acBuffer), &dwLength, dwMilliseconds))
+		{
+			spdlog::error("read failure!!! {}",szMaxLen,dwMilliseconds);
 			return FALSE;
+		}
 		//Check if correct package index was read
 		//m_acBuffer[0];  //For HID internal usage ,ignored
 		UCHAR ucCmdIndex = ((UCHAR)m_acBuffer[2]&(UCHAR)0x7F);
@@ -442,8 +397,8 @@ BOOL CHidCmd:: ReadFile(unsigned char *pcBuffer,size_t szMaxLen,DWORD *pdwLength
 			if(dwCmdLength > szMaxLen)
 				dwCmdLength = szMaxLen;
 			//CRC check
-			crc = CRC16(&m_acBuffer[1],dwCmdLength+5,0xffff);
-			crc_pack =(USHORT)(((UCHAR)m_acBuffer[dwCmdLength+6])<<8) | ((UCHAR)m_acBuffer[dwCmdLength+7]);
+			crc = CRC16(m_acBuffer,dwCmdLength+5);
+			crc_pack =(USHORT)(((UCHAR)m_acBuffer[dwCmdLength+6])<<8) | ((UCHAR)m_acBuffer[dwCmdLength+5]);
 			if (crc==crc_pack)
 			{
 				memcpy(pcBuffer, m_acBuffer + 6, dwCmdLength);
@@ -467,26 +422,34 @@ BOOL CHidCmd:: WriteFile(unsigned char *pcBuffer ,DWORD dwLen ,DWORD *pdwLength 
 	++m_ucCmdIndex;
 	m_ucCmdIndex = (m_ucCmdIndex & (UCHAR)0x7F);
 
+	dwLen = std::clamp((int)dwLen,0,64);
+
 	DWORD dwCmdLength = dwLen;
-	if(dwCmdLength > sizeof(m_acBuffer) - 8)
-		dwCmdLength = sizeof(m_acBuffer)- 8;
+
 	//Always 0x00
 	m_acBuffer[0] = 0x00; 
 	//package Index
-	m_acBuffer[1] = 0x00;
+	m_acBuffer[1] = 0;
 	//board type
 	m_acBuffer[2] = 0x02;
 	m_acBuffer[3] = 0;
 	//valid length
 	m_acBuffer[4] = (UCHAR)dwCmdLength;
 	m_acBuffer[5] = 0;
-	memcpy(m_acBuffer + 6, pcBuffer ,dwCmdLength);
-	//ĞÂÔö¼ÓÁËCRC16Ğ£Ñé£¬´ø2¸ö×Ö½Ú ´Ó°üºÅ¿ªÊ¼µ½Êı¾İ½áÊø£¬Ëæºó2×Ö½ÚÊÇCRC
-	crc = CRC16(&m_acBuffer[1],dwCmdLength+4,0xffff);
+	m_acBuffer[6] = 0;
+	m_acBuffer[7] = 0;
+	m_acBuffer[8] = 0;
+	memcpy(m_acBuffer + 6, pcBuffer ,dwLen - 1);
+	crc = CRC16(m_acBuffer,dwCmdLength + 5);
 	m_acBuffer[dwCmdLength+5]=(unsigned char)((crc&0xFF00)>>8);  
 	m_acBuffer[dwCmdLength+6]=(unsigned char)(crc&0x00FF); 
 
-	BOOL bRet = m_hidIO.WriteFile(m_acBuffer,sizeof(m_acBuffer),pdwLength,dwMilliseconds);
+	unsigned char* d = &m_acBuffer[0];
+	BOOL bRet = m_hidIO.WriteFile(m_acBuffer,dwLen + 7,pdwLength,dwMilliseconds);
+	if (!bRet)
+	{
+		spdlog::error("write failure!!! {} {}", GetLastError(),dwCmdLength);
+	}
 	return bRet;
 }
 
@@ -496,20 +459,17 @@ BOOL CHidCmd:: IsCmdError()
 }
 
 
-USHORT CHidCmd::CRC16(unsigned char* puchMsgg,DWORD usDataLen,USHORT crcInput)
+USHORT CHidCmd::CRC16(unsigned char* data, DWORD len)
 {
-	UCHAR uchCRCHi;  
-	UCHAR uchCRCLo;  
-	UCHAR uIndex ; 
-
-	uchCRCHi = (UCHAR)(crcInput>>8);
-	uchCRCLo = (UCHAR)crcInput;
-
-	while (usDataLen--) 
-	{ 
-		uIndex = uchCRCHi ^ *puchMsgg++ ; 
-		uchCRCHi = uchCRCLo ^ ComData::auchCRCHi[uIndex] ; 
-		uchCRCLo = ComData::auchCRCLo[uIndex] ; 
-	} 
-	return (uchCRCHi << 8 | uchCRCLo) ; 
+	/*
+	name    polynomial  initial val  reverse byte ? reverse result ? swap result ?
+		CCITT         1021         ffff             no               no            no
+		XModem        1021         0000             no               no            no
+		Kermit        1021         0000            yes              yes           yes
+		CCITT 1D0F    1021         1d0f             no               no            no
+		IBM           8005         0000            yes              yes            no
+	*/
+	boost::crc_optimal<16, 0x1021, 0, 0, true, true> crc_ccitt_kermit;
+	crc_ccitt_kermit = std::for_each(data, data + len, crc_ccitt_kermit);
+	return crc_ccitt_kermit.checksum();
 }

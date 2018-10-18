@@ -40,7 +40,7 @@ typedef union {
 class CHidDevice
 {
 public:
-	using Buffer = std::array<unsigned char, 64>;
+	using Buffer = std::array<unsigned char, 100>;
 
 private:
 	bool mRunning = true;

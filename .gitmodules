@@ -4,3 +4,6 @@
 [submodule "thirdparty/lua"]
 	path = thirdparty/lua
 	url = https://github.com/lua/lua.git
+[submodule "thirdparty/boost"]
+	path = thirdparty/boost
+	url = https://github.com/liuping1997/boost.git

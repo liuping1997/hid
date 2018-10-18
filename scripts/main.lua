@@ -1,4 +1,4 @@
-package.path = "../../scripts/?.lua;./scripts/?.lua" .. package.path
+package.path = "../../scripts/?.lua;./scripts/?.lua;./?.lua;" .. package.path
 
 local app = require("app")
 local console = require("console")
@@ -69,18 +69,9 @@ function init()
 end
 
 function event_loop(dt)
-	try {
-		main = function()
-			read_hid()
-			print_hid()
-			timer.update(dt)
-		end,
-		catch = function(errors)
-			print("catch : " .. errors)
-		end,
-		finally = function(ok, errors)
-		end
-	}
+	read_hid()
+	print_hid()
+	timer.update(dt)
 	--print("dt:" .. dt)
 end
 

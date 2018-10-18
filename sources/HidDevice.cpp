@@ -115,7 +115,7 @@ bool CHidDevice::fetch()
 	unsigned char c1[2];
 	unsigned char b2f[4];
 	SetState();
-	if(!(mDeviceIo->ReadFile(mReadBuf.data() + 6, mReadBuf.back(), &Length, 2000)))
+	if(!(mDeviceIo->ReadFile(mReadBuf.data() + 6, mReadBuf.back(), &Length, 500)))
 	{
 		return false;
 	}
@@ -224,8 +224,10 @@ bool CHidDevice::SetState()
 
 	DWORD Length;
 	unsigned char xBuf = 0xB5;
-	if (!mDeviceIo->WriteFile(&xBuf, sizeof(xBuf) + 1, &Length, 2000))
+	spdlog::info("send read request");
+	if (!mDeviceIo->WriteFile(&xBuf, 2, &Length, 2000))
 	{
+		spdlog::error("send read request failure");
 		mOpened = mDeviceIo->OpenDevice(0x051A, 0x511B);
 		return mDeviceIo->WriteFile(&xBuf, sizeof(xBuf) + 1, &Length, 2000);
 	}
