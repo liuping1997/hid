@@ -6,18 +6,25 @@
 #include  <boost/crc.hpp>
 #include <Windows.h>
 #include <iostream>
+#include <codecvt>
+#include "hidapi.h"
 
 using std::cout;
 using std::endl;
 
 #pragma warning(disable:4267)
+#pragma warning(disable:4996)
 
-char* ConvertErrorCodeToString(DWORD ErrorCode)
+std::string getLastErrorInfo()
 {
+	DWORD errorcode = GetLastError();
 	HLOCAL LocalAddress = NULL;
-	FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
-		NULL, ErrorCode, 0, (PTSTR)&LocalAddress, 0, NULL);
-	return (LPSTR)LocalAddress;
+	FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
+		NULL, errorcode, 0, (LPWSTR)&LocalAddress, 0, NULL);
+
+	std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+	std::wstring wstr(static_cast<LPWSTR>(LocalAddress));
+	return (conv.to_bytes( wstr));
 }
 
 CHidIO::CHidIO():m_hReadHandle(INVALID_HANDLE_VALUE)
@@ -27,7 +34,6 @@ CHidIO::CHidIO():m_hReadHandle(INVALID_HANDLE_VALUE)
 		,m_hWriteEvent(CreateEvent(NULL,0,0,NULL))
 		,m_bUseTwoHandle(TRUE)
 {
-
 }
 
 CHidIO:: ~CHidIO()
@@ -215,8 +221,8 @@ BOOL CHidIO::OpenDevice(BOOL bUseTwoHandle, ushort usVID,ushort usPID)
 							FILE_SHARE_READ|FILE_SHARE_WRITE,
 							NULL,
 							OPEN_EXISTING,
-							//FILE_ATTRIBUTE_NORMAL,
-							FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED,
+							FILE_ATTRIBUTE_NORMAL,
+							//FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED,
 							NULL);
 					m_hWriteHandle = CreateFile(MyDevPathName,
 							GENERIC_WRITE,
@@ -225,6 +231,9 @@ BOOL CHidIO::OpenDevice(BOOL bUseTwoHandle, ushort usVID,ushort usPID)
 							OPEN_EXISTING,
 							FILE_ATTRIBUTE_NORMAL,
 							NULL);
+
+					spdlog::info("CreatFile For Read: {}", m_hReadEvent > 0);
+					spdlog::info("CreatFile For Write: {}", m_hWriteEvent > 0);
 				}
 				else
 				{
@@ -250,58 +259,75 @@ BOOL CHidIO::OpenDevice(BOOL bUseTwoHandle, ushort usVID,ushort usPID)
 	return MyDevFound;
 }
 
-BOOL CHidIO::ReadFile(uchar *pcBuffer, size_t szMaxLen, DWORD *pdwLength, DWORD dwMilliseconds)
+BOOL CHidIO::ReadFile(uchar *pcBuffer, size_t szLen, DWORD *pdwLength, DWORD dwMilliseconds)
 {
 	HANDLE events[2] = {m_hAbordEvent,m_hReadEvent};
 
 	OVERLAPPED overlapped;
 	memset(&overlapped, 0 , sizeof(overlapped));
 	overlapped.hEvent = m_hReadEvent;
+	overlapped.Offset = 0;
+	overlapped.OffsetHigh = 0;
 
 	if(pdwLength != NULL)
 		*pdwLength = 0;
 
-	DWORD lpNumberOfBytesRead = 0;
-	if(!::ReadFile(m_hReadHandle, pcBuffer, szMaxLen, &lpNumberOfBytesRead, &overlapped))
+	szLen = ((szLen / 64) + 1) * 64 + 1;
+
+	uchar d[128] = { 0 };
+	spdlog::info("read buffer 1:{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10], d[11], d[12], d[13], d[14], d[15]);
+	if(!::ReadFile(m_hReadHandle, d, szLen, NULL, NULL))
 	{
-		spdlog::error("ReadFile Error:{} {}", GetLastError(), szMaxLen,lpNumberOfBytesRead);
-		if(ERROR_IO_PENDING == GetLastError())
+		if (ERROR_IO_PENDING == GetLastError())
 		{
-			DWORD dwIndex = WaitForMultipleObjects(2, events, FALSE, dwMilliseconds);
-
-			if(dwIndex == WAIT_OBJECT_0 || dwIndex == WAIT_OBJECT_0 + 1)
+			DWORD waitError = 0;
+			int count = 0;
+			do
 			{
-				ResetEvent(events[dwIndex - WAIT_OBJECT_0]);
+				if (++count > 5)
+					break;
+				waitError = WaitForSingleObject(m_hReadEvent, dwMilliseconds);
+				spdlog::info("ReadFile WaitForSingleObject");
+			} while (waitError == WAIT_TIMEOUT);
 
-				if (dwIndex == WAIT_OBJECT_0)
+			//DWORD dwIndex = WaitForMultipleObjects(2, events, FALSE, dwMilliseconds);
+			if(waitError== WAIT_OBJECT_0 || waitError == WAIT_OBJECT_0 + 1)
+			{
+				ResetEvent(overlapped.hEvent);
+
+				if (waitError == WAIT_OBJECT_0 + 1)
 				{
 					spdlog::error("abort event");
 					return FALSE;   //Abort event
 				}
-				else if (dwIndex == (WAIT_OBJECT_0 + 1))
+				else if (waitError == (WAIT_OBJECT_0))
 				{
-					DWORD dwLength = 0;
-					//Read OK
-					GetOverlappedResult(m_hReadHandle, &overlapped, &dwLength, TRUE);
-					if(pdwLength != NULL)
-						*pdwLength = dwLength;
+					//DWORD dwLength = 0;
+					////Read OK
+					//GetOverlappedResult(m_hReadHandle, &overlapped, &dwLength, TRUE);
+					//if(pdwLength != NULL)
+					//	*pdwLength = dwLength;
+					spdlog::info("read buffer 2:{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10], d[11], d[12], d[13], d[14], d[15]);
 					return TRUE;
 				}
 			}
 			else
 			{
-				if (dwIndex == WAIT_TIMEOUT)
+				if (waitError == WAIT_TIMEOUT)
 					spdlog::error("ReadFile WaitForMultipleObjects WAIT_TIMEOUT");
-				else if (dwIndex == WAIT_FAILED)
+				else if (waitError == WAIT_FAILED)
 					spdlog::error("ReadFile WaitForMultipleObjects WAIT_FAILED");
+				spdlog::error("ReadFile :{} {}", getLastErrorInfo(), szLen);
 				return FALSE;
 			}
 		}
 		else
 		{
+			spdlog::error("ReadFile :{}", getLastErrorInfo());
 			return FALSE;
 		}
 	}
+	spdlog::info("ReadFile success");
 	return TRUE;
 }
 
@@ -310,7 +336,6 @@ BOOL CHidIO::WriteFile(uchar *pcBuffer, size_t szLen, DWORD *pdwLength, DWORD dw
 	HANDLE events[2] = {m_hAbordEvent, m_hWriteEvent};
 
 	OVERLAPPED overlapped;
-	DWORD err;
 
 	memset(&overlapped, 0 ,sizeof(overlapped));
 	overlapped.hEvent = m_hWriteEvent;
@@ -318,10 +343,12 @@ BOOL CHidIO::WriteFile(uchar *pcBuffer, size_t szLen, DWORD *pdwLength, DWORD dw
 	if(pdwLength != NULL)
 		*pdwLength =0;
 
-	if(!::WriteFile(m_hWriteHandle,pcBuffer,szLen,NULL,&overlapped))
+	szLen = ((szLen / 64) + 1) * 64 +1;
+
+	DWORD dwWrite = 0;
+	if(!::WriteFile(m_hWriteHandle,pcBuffer,szLen,&dwWrite,&overlapped))
 	{
-		err=GetLastError();
-		cout<<"Last Error is " <<err<<szLen<<endl;
+		spdlog::error("error info:{} len:{}", getLastErrorInfo(), szLen);
 		return FALSE;
 	}
 
@@ -331,8 +358,10 @@ BOOL CHidIO::WriteFile(uchar *pcBuffer, size_t szLen, DWORD *pdwLength, DWORD dw
 	{
 		ResetEvent(events[dwIndex - WAIT_OBJECT_0]);
 
-		if(dwIndex == WAIT_OBJECT_0)
+		if (dwIndex == WAIT_OBJECT_0)
+		{
 			return FALSE;// Abort event 
+		}
 		else
 		{
 			DWORD dwLength = 0;
@@ -340,11 +369,21 @@ BOOL CHidIO::WriteFile(uchar *pcBuffer, size_t szLen, DWORD *pdwLength, DWORD dw
 			GetOverlappedResult(m_hWriteHandle, &overlapped, &dwLength,TRUE);
 			if(pdwLength !=NULL)
 				*pdwLength = dwLength;
+			auto d = pcBuffer;
+			spdlog::info("write buffer :{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10], d[11], d[12], d[13], d[14], d[15]);
+			spdlog::info("WriteFile success");
 			return TRUE;
 		}
 	}
 	else
+	{
+		if (dwIndex == WAIT_TIMEOUT)
+			spdlog::error("ReadFile WaitForMultipleObjects WAIT_TIMEOUT");
+		else if (dwIndex == WAIT_FAILED)
+			spdlog::error("ReadFile WaitForMultipleObjects WAIT_FAILED");
+		spdlog::error("ReadFile :{} {}", getLastErrorInfo(), szLen);
 		return FALSE;
+	}
 }
 
 
@@ -385,13 +424,13 @@ BOOL CHidCmd:: ReadFile(uchar *pcBuffer,size_t szMaxLen,DWORD *pdwLength,DWORD d
 
 		memset(m_acBuffer, 0, sizeof(m_acBuffer));
 
-		uchar* d = m_acBuffer;
+		uchar d[512] = {};
 
-		if (!m_hidIO.ReadFile(m_acBuffer, sizeof(m_acBuffer), &dwLength, dwMilliseconds))
+		if (!m_hidIO.ReadFile(d, 64, &dwLength, dwMilliseconds))
 		{
-			spdlog::error("read failure!!! {} {}", ConvertErrorCodeToString(GetLastError()), szMaxLen);
 			return FALSE;
 		}
+		spdlog::info("read buffer {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}",d[0],d[1],d[2],d[3],d[4],d[5],d[6],d[7],d[8],d[9],d[10],d[11],d[12],d[13],d[14],d[15]);
 
 		uchar ucCmdIndex = ((uchar)m_acBuffer[2]&(uchar)0x7F);
 		m_bCmdError = (((uchar)m_acBuffer[2] & (uchar)0x80) == (uchar)0x80 ? TRUE : FALSE);
@@ -448,7 +487,7 @@ BOOL CHidCmd:: WriteFile(uchar *pcBuffer ,DWORD dwLen ,DWORD *pdwLength ,DWORD d
 	if (!bRet)
 	{
 		spdlog::error("[[ {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} ]]", d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10], d[11], d[12], d[13], d[14], d[15]);
-		spdlog::error("write failure--> {} {}", ConvertErrorCodeToString(GetLastError()),len);
+		spdlog::error("write failure-->{} {}", getLastErrorInfo(),len);
 	}
 	return bRet;
 }

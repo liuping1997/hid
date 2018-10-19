@@ -5,6 +5,7 @@
 #include "Application.hpp"
 #include "ApplicationAPI.hpp"
 #include "ConsoleAPI.hpp"
+#include "HidAPI.hpp"
 #include <filesystem>
 
 using namespace std;
@@ -65,6 +66,7 @@ namespace Lua
 	{
 		application_register(l);
 		console_register(l);
+		hid_register(l);
 		Lua::L = l;
 	}
 

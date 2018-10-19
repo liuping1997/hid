@@ -8,25 +8,25 @@
 #include <mutex>
 #include <queue>
 #include <array>
-
-class CHidCmd;
+#include "hidapi.h"
 
 class CHidDevice
 {
 public:
 	using uchar = unsigned char;
-	using Buffer = std::array<uchar, 100>;
+	using Buffer = std::array<uchar, 128>;
+	using ReadBuffer = std::array<uchar, 1024>;
 	using ushort = unsigned short;
 	using uint = unsigned int;
 
 private:
+	hid_device*  mHandle;
 	bool mRunning = true;
 	std::mutex mMutex;
-	CHidCmd *mDeviceIo = nullptr;
 	bool mOpened = false;
 	/// Êý¾Ý¶ÁÐ´ÆµÂÊ
 	int mLimtedHZ = 20;
-	Buffer mReadBuf;
+	ReadBuffer mReadBuf;
 	std::queue<Buffer> mWriteBufs;
 	std::shared_ptr<std::thread> mWorkerThread = nullptr;
 
@@ -39,7 +39,7 @@ public:
 	bool reset() { return true; }
 	void write(const Buffer& buf);
 	void write(const Buffer&& buf);
-	void read(Buffer& buf);
+	void read(ReadBuffer& buf);
 	void quit();
 
 private:

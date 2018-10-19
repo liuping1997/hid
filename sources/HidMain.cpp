@@ -58,8 +58,6 @@ int main (int argc, char **argv)
 	boost::uint16_t const expected = 0x1641;
 
 	// Simulate CRC-CCITT
-
-
 	boost::crc_basic<16> crc_ccitt22(0x1021, 0x0000, 0, true, true);
 	crc_ccitt22.process_bytes(data, data_len);
 	spdlog::info("{0:x}",crc_ccitt22.checksum());

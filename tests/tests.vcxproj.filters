@@ -10,6 +10,9 @@
     <Filter Include="scriptapi">
       <UniqueIdentifier>{c5e1c95b-604e-46f5-b1e3-41367a38f093}</UniqueIdentifier>
     </Filter>
+    <Filter Include="thirdparty">
+      <UniqueIdentifier>{59794d31-406d-4961-b445-0602c3fca55b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\thirdparty\lua\lapi.c">
@@ -129,6 +132,9 @@
     <ClCompile Include="..\sources\scriptapi\ScriptCore.cpp">
       <Filter>scriptapi</Filter>
     </ClCompile>
+    <ClCompile Include="..\thirdparty\hidapi\windows\hid.c">
+      <Filter>thirdparty</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\thirdparty\lua\lapi.h">
@@ -244,6 +250,9 @@
     </ClInclude>
     <ClInclude Include="..\sources\scriptapi\ConsoleAPI.hpp">
       <Filter>scriptapi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\thirdparty\hidapi\hidapi\hidapi.h">
+      <Filter>thirdparty</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

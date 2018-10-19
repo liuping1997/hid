@@ -36,7 +36,7 @@ public:
 		// logger
 		std::filesystem::create_directory("./logs/");
 		auto rotating_logger = spdlog::rotating_logger_mt("hid", "./logs/hid.log", 1048576 * 5, 3);
-		spdlog::flush_every(std::chrono::seconds(3));
+		spdlog::flush_every(std::chrono::seconds(1));
 	
 		Lua::initialize();
 	}
@@ -67,7 +67,7 @@ public:
 
 	uchar* read(uchar cmd, int len)
 	{
-		static CHidDevice::Buffer buf;
+		static CHidDevice::ReadBuffer buf;
 		len = std::clamp(len, 0, 0x26);
 		buf[6] = cmd;
 		buf[buf.size() - 1] = len;
