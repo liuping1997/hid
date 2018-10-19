@@ -280,17 +280,8 @@ BOOL CHidIO::ReadFile(uchar *pcBuffer, size_t szLen, DWORD *pdwLength, DWORD dwM
 	{
 		if (ERROR_IO_PENDING == GetLastError())
 		{
-			DWORD waitError = 0;
 			int count = 0;
-			do
-			{
-				if (++count > 5)
-					break;
-				waitError = WaitForSingleObject(m_hReadEvent, dwMilliseconds);
-				spdlog::info("ReadFile WaitForSingleObject");
-			} while (waitError == WAIT_TIMEOUT);
-
-			//DWORD dwIndex = WaitForMultipleObjects(2, events, FALSE, dwMilliseconds);
+			DWORD waitError = WaitForMultipleObjects(2, events, FALSE, dwMilliseconds);
 			if(waitError== WAIT_OBJECT_0 || waitError == WAIT_OBJECT_0 + 1)
 			{
 				ResetEvent(overlapped.hEvent);
@@ -302,11 +293,11 @@ BOOL CHidIO::ReadFile(uchar *pcBuffer, size_t szLen, DWORD *pdwLength, DWORD dwM
 				}
 				else if (waitError == (WAIT_OBJECT_0))
 				{
-					//DWORD dwLength = 0;
-					////Read OK
-					//GetOverlappedResult(m_hReadHandle, &overlapped, &dwLength, TRUE);
-					//if(pdwLength != NULL)
-					//	*pdwLength = dwLength;
+					DWORD dwLength = 0;
+					//Read OK
+					GetOverlappedResult(m_hReadHandle, &overlapped, &dwLength, TRUE);
+					if(pdwLength != NULL)
+						*pdwLength = dwLength;
 					spdlog::info("read buffer 2:{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}", d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10], d[11], d[12], d[13], d[14], d[15]);
 					return TRUE;
 				}
@@ -422,9 +413,8 @@ BOOL CHidCmd:: ReadFile(uchar *pcBuffer,size_t szMaxLen,DWORD *pdwLength,DWORD d
 		m_acBuffer[4] = szMaxLen; 
 		m_acBuffer[5] = 0; 
 
+		auto d = m_acBuffer;
 		memset(m_acBuffer, 0, sizeof(m_acBuffer));
-
-		uchar d[512] = {};
 
 		if (!m_hidIO.ReadFile(d, 64, &dwLength, dwMilliseconds))
 		{
@@ -470,17 +460,17 @@ BOOL CHidCmd:: WriteFile(uchar *pcBuffer ,DWORD dwLen ,DWORD *pdwLength ,DWORD d
 	int len = std::clamp(static_cast<int>(dwLen),1,64);
 
 	uchar* buf = m_acBuffer;
-	buf[0] = 0x00; 
+	buf[0] = 0;//report id
 	buf[1] = 0;
-	buf[2] = 0x02;
-	buf[3] = 0;
-	buf[4] = (uchar)len;
-	buf[5] = 0;
+	buf[2] = 0;
+	buf[3] = 2;
+	buf[4] = 0;
+	buf[5] = (uchar)len;
 	buf[6] = 0;
-	memcpy(buf + 6, pcBuffer ,len - 1);
-	ushort crc = CRC16(buf,len + 5);
-	buf[len+5]=(uchar)((crc&0xFF00)>>8);
-	buf[len+6]=(uchar)(crc&0x00FF); 
+	memcpy(buf + 7, pcBuffer ,len - 1);
+	ushort crc = CRC16(&buf[1],len + 5);
+	buf[len+6]=(uchar)((crc&0xFF00)>>8);
+	buf[len+7]=(uchar)(crc&0x00FF); 
 
 	uchar* d = buf;
 	BOOL bRet = m_hidIO.WriteFile(buf, dwLen + 7, pdwLength, dwMilliseconds);

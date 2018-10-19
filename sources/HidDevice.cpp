@@ -51,7 +51,6 @@ bool CHidDevice::open(ushort usVID, ushort usPID)
 	}
 	hid_free_enumeration(devs);
 
-
 	mHandle = hid_open(usVID, usPID, NULL) ;
 	mOpened = mHandle > 0;
 	if (!mHandle) {
@@ -181,17 +180,13 @@ bool CHidDevice::fetch()
 
 	notifyForRead();
 
-	mReadBuf = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
 	auto buf = mReadBuf.data();
-	spdlog::info("start read");
 	int res = hid_read_timeout(mHandle, buf, 65, 2000);
 	if (res == 0)
 		spdlog::info("waiting...");
 	else if (res < 0)
 		spdlog::error("Unable to read()");
 
-	auto &d = buf;
-	spdlog::info("read buffer :{} {} {} {} {} {} {} {} {}", d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8]);
 	return res > 0;
 }
 
@@ -200,18 +195,16 @@ bool CHidDevice::notifyForRead()
 	if (!mOpened)
 		return false;
 
-	spdlog::info("notity for read");
+	//spdlog::info("notity for read");
 
 	size_t len = 65;
-	static std::array<uchar, 9> buf{0x0,0x0,0x02,0x00,0x02,0x00,0xB5,0x41,0x16};
+	static std::array<uchar, 10> buf{0, 0x0,0x0,0x02,0x00,0x02,0x00,0xB5,0x41,0x16};
 	int res = hid_write(mHandle, buf.data(), len);
 	if (res < 0)
 		spdlog::error("Unable to write() (2)\n");
-	else
-		spdlog::info("hid_write success {}",res);
 
-	auto d = buf.data();
-	spdlog::info("write buffer :{} {} {} {} {} {} {} {} {}", d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8]);
+	//auto d = buf.data();
+	//spdlog::info("write buffer :{} {} {} {} {} {} {} {} {}", d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8]);
 
 	return res > 0;
 }
@@ -223,6 +216,7 @@ void CHidDevice::update()
 	{
 		std::this_thread::sleep_for(std::chrono::milliseconds(50));
 	}
+
 	while (mRunning)
 	{
 		auto start = system_clock::now(); 

@@ -53,10 +53,8 @@ local global_objects = {
 
 --- Check modules and hotfix_impl.
 function M.check()
-    print("enter check")
     local MOD_NAME = "module_names"
     if not package.searchpath(MOD_NAME, package.path) then return end
-    print("enter check")
     package.loaded[MOD_NAME] = nil  -- always reload it
     local module_names = require(MOD_NAME)
 

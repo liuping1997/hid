@@ -82,9 +82,6 @@ public:
 		memcpy_s(buf.data(), len, cmd, len);
 		buf[buf.size() - 1] = len;
 		mHID->write(std::move(buf));
-		auto start = system_clock::now();
-		duration<double> diff = start - now;
-		spdlog::info("write:", diff.count());
 	}
 };
 

@@ -10,7 +10,7 @@ function M.event_loop(dt)
     elapsed = elapsed + dt
     if elapsed > 2 then
       hotfix.check()
-      print("elapsed:",elapsed)
+      --print("elapsed:",elapsed)
       elapsed = 0
     end
 end

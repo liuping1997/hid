@@ -2,6 +2,7 @@
 local app = require("app")
 local console = require("console")
 local timer = require("timer")
+local hid = require("hid")
 
 local M={}
 -- 读缓冲区
@@ -67,22 +68,24 @@ function M.init()
 	console.set_cursor_visible(false)
 	console.set_window_size(120, 40)
 	console.set_buffer_size(120, 20)
+	--hid.init()
 end
 
 function M.event_loop(dt)
-	M.read_hid()
-	M.print_hid()
+	--M.read_hid()
+	--M.print_hid()
 	timer.update(dt)
-	print("12")
 end
 
 function M.open_hid()
-	validhid = app.open(0x051a, 0x511b)
+	-- validhid = hid.open()
+	validhid = app.open(0x051A, 0x511B)
 end
 
 function M.close_hid()
 	validhid = false
 	app.close()
+	--hid.close()
 end
 
 local function is_on(d)
@@ -186,7 +189,8 @@ function M.write_cmd(name, id, data1, data2, data3)
 	end
 	--print(name, type, data1, data2, data3, d[1], d[2], d[3], d[4])
 	device.data = string.char(d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10])
-	return app.write(device.data, len)
+	--return hid.write(device.data)
+	return app.write(device.data,len)
 end
 
 function M.read_hid()
@@ -241,7 +245,7 @@ function M.read_hid()
 		rbuf[41] = string.byte(buf, 1, len)
 end
 
-function test_read_hid()
+local function test_read_hid()
 	M.read_hid()
 	print(string.format("head:%d %d %d %d %d %d %d", rbuf[1], rbuf[2], rbuf[3], rbuf[4], rbuf[5], rbuf[6], rbuf[7]))
 	print(string.format("body:%d %d %d %d %d %d %d %d", rbuf[8], rbuf[9], rbuf[10], rbuf[11], rbuf[12], rbuf[13], rbuf[14], rbuf[15]))

@@ -1,22 +1,29 @@
+local M = {}
 local hidapi = require("hidapi")
-local handle = nil
+local ins = nil
 local id = 0
 local adapter_command = {
   address_list = 0x01,
   data = 0x02
 }
 
-local function init()
+function M.init()
     hidapi.init()
 end
 
-local function open()
-    handle = hidapi.open(0x051A, 0x511B)
+function M.open()
+    ins = hidapi.open(0x051A, 0x511B)
+    if ins == nil then
+      print("open hid failure")
+    end
+    return ins ~= nil
 end
 
-local function close()
-    hidapi.close()
-    handle = nil
+function M.close()
+    if ins ~= nil then
+      ins:close()
+    end
+    ins = nil
 end
 
 local function next_packet_id()
@@ -25,7 +32,7 @@ local function next_packet_id()
   return id
 end
 
-local function send_table(data)
+function M.send_packet(data)
   --[[local id = next_packet_id()
 
   print('id', id)
@@ -37,19 +44,24 @@ local function send_table(data)
     0x01, ---message count
     #data
   }
-
   for _, byte in ipairs(data) do
     table.insert(packet, byte)
   end
   ]]
   print(table.unpack(data))
-
-  api:write(string.char(table.unpack(data)))
+  hidapi:write(string.char(table.unpack(data)))
 end
 
-local function send_message(message)
-  local id = next_packet_id()
+function M.write(data)
+  hidapi:write(data)
+end
 
+function M.read(len)
+  return hidapi:read(len)
+end
+
+function M.send_message(message)
+  local id = next_packet_id()
   local message_bytes = {
     adapter_command.data,
     id % 0xFF, -- id1
@@ -69,6 +81,7 @@ local function send_message(message)
   send_packet(message_bytes)
 end
 
+--[[
 send_message({
   source = 0xE4,
   destination = 0xFF,
@@ -76,7 +89,7 @@ send_message({
     0x01
   }
 })
-
+]]
     -- function onPacketReceived(packet) {
     --     var reader = new stream.Reader(packet);
     --     var type = reader.readUInt8();
@@ -111,14 +124,21 @@ local function handle_received_message_or_something(message)
 
 end
 
-while true do
-  local rx = handle:read(61)
-  if rx and #rx > 1 then
-    handle_received_message_or_something(rx)
-
-    for i = 1, #rx do
-      io.write(string.byte(rx, i) .. ',')
+function test_read_hid()
+    if inside == nil then
+        print("hit not opend")
+      return
     end
-    io.write('\n')
-  end
+    print("test read hid")
+    ins:write(string.char(00,00,02,00,02,00,0xb5,0x41,0x16))
+    local rx = ins:read(65)
+    if rx and #rx > 1 then
+      handle_received_message_or_something(rx)
+      for i = 1, #rx do
+        io.write(string.byte(rx, i) .. ',')
+      end
+      io.write('\n')
+    end
 end
+
+return M
