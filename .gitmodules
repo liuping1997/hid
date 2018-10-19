@@ -3,7 +3,7 @@
 	url = https://github.com/gabime/spdlog.git
 [submodule "thirdparty/lua"]
 	path = thirdparty/lua
-	url = https://github.com/lua/lua.git
+	url = https://github.com/liuping1997/lua.git
 [submodule "thirdparty/boost"]
 	path = thirdparty/boost
 	url = https://github.com/liuping1997/boost.git
