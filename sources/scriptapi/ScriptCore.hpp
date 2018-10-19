@@ -6,6 +6,7 @@ namespace Lua
 {
 	void initialize();
 	void close();
+	void eventLoop(double dt);
 	void registerAPI(lua_State *L);
 	void call(const char* func);
 	void call(const char* func, double arg, int nresults);

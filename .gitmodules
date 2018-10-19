@@ -10,3 +10,4 @@
 [submodule "thirdparty/hidapi"]
 	path = thirdparty/hidapi
 	url = https://github.com/signal11/hidapi.git
+

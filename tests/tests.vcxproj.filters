@@ -13,6 +13,9 @@
     <Filter Include="thirdparty">
       <UniqueIdentifier>{59794d31-406d-4961-b445-0602c3fca55b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="thirdparty\lfs">
+      <UniqueIdentifier>{f488d106-6a47-4b1a-b555-e843ea8f1ae0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\thirdparty\lua\lapi.c">
@@ -135,6 +138,9 @@
     <ClCompile Include="..\thirdparty\hidapi\windows\hid.c">
       <Filter>thirdparty</Filter>
     </ClCompile>
+    <ClCompile Include="..\thirdparty\lfs\lfs.c">
+      <Filter>thirdparty\lfs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\thirdparty\lua\lapi.h">
@@ -253,6 +259,9 @@
     </ClInclude>
     <ClInclude Include="..\thirdparty\hidapi\hidapi\hidapi.h">
       <Filter>thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="..\thirdparty\lfs\lfs.h">
+      <Filter>thirdparty\lfs</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,8 +1,9 @@
-package.path = "../../scripts/?.lua;./scripts/?.lua;./?.lua;" .. package.path
 
 local app = require("app")
 local console = require("console")
 local timer = require("timer")
+
+local M={}
 -- 读缓冲区
 local rbuf = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 local validhid = false
@@ -33,7 +34,7 @@ local devices = {
 }
 
 -- 异常捕获
-function try(block)
+local function try(block)
 	local main = block.main
 	local catch = block.catch
 	local finally = block.finally
@@ -60,31 +61,31 @@ function try(block)
 	end
 end
 
-function init()
+function M.init()
 	print("lua init")
 	console.set_cp(65001, 10)
 	console.set_cursor_visible(false)
 	console.set_window_size(120, 40)
-	console.set_buffer_size(120, 40)
+	console.set_buffer_size(120, 20)
 end
 
-function event_loop(dt)
-	read_hid()
-	print_hid()
+function M.event_loop(dt)
+	M.read_hid()
+	M.print_hid()
 	timer.update(dt)
-	--print("dt:" .. dt)
+	print("12")
 end
 
-function open_hid()
+function M.open_hid()
 	validhid = app.open(0x051a, 0x511b)
 end
 
-function close_hid()
+function M.close_hid()
 	validhid = false
 	app.close()
 end
 
-function is_on(d)
+local function is_on(d)
 	if d == nil then
 		return "-"
 	end
@@ -92,7 +93,7 @@ function is_on(d)
 end
 
 -- 判断高位开关
-function is_h_on(d)
+local function is_h_on(d)
 	if d == nil then
 		return "-"
 	end
@@ -100,42 +101,42 @@ function is_h_on(d)
 end
 
 -- 判断低位开关
-function is_l_on(d)
+local function is_l_on(d)
 	if d == nil then
 		return "-"
 	end
 	return ((d & 0xf) > 0 and status.on) or status.off
 end
 
-function is_checked(d)
+local function is_checked(d)
 	if d == nil then
 		return "-"
 	end
 	return ((d >> 4) > 0 and status.checked) or status.unchecked
 end
 
-function is_leaved(d)
+local function is_leaved(d)
 	if d == nil then
 		return "-"
 	end
 	return ((d & 0xf) > 0 and status.leave) or status.lay
 end
 
-function to_short(h8, l8)
+local function to_short(h8, l8)
 	if h8 == nil or l8 == nil then
 		return 0
 	end
 	return l8 << 8 + h8
 end
 
-function to_byte(d)
+local function to_byte(d)
 	if d == nil then
 		return 0
 	end
 	return d
 end
 
-function print_hid()
+function M.print_hid()
 	local x = 70
 	local b = rbuf
 	console.print(x, 01, string.format("%s:%s %s", "洗手液:", is_on(b[8]), "", ""))
@@ -151,7 +152,7 @@ function print_hid()
 	console.print(x, 11, string.format("%s:%s %s %d %d %d", "注射器:", is_checked(b[37]), is_leaved(b[37]), to_short(b[38], b[39]), to_byte(b[40]), to_byte(b[41])))
 end
 
-function parse_short(d)
+local function parse_short(d)
 	if d == nil then
 		return 0
 	end
@@ -159,7 +160,7 @@ function parse_short(d)
 	return d >> 8, d & 0xff
 end
 
-function write_cmd(name, id, data1, data2, data3)
+function M.write_cmd(name, id, data1, data2, data3)
 	if validhid == false then
 		return
 	end
@@ -188,7 +189,7 @@ function write_cmd(name, id, data1, data2, data3)
 	return app.write(device.data, len)
 end
 
-function read_hid()
+function M.read_hid()
 	if validhid == false then
 		return
 	end
@@ -241,7 +242,7 @@ function read_hid()
 end
 
 function test_read_hid()
-	read_hid()
+	M.read_hid()
 	print(string.format("head:%d %d %d %d %d %d %d", rbuf[1], rbuf[2], rbuf[3], rbuf[4], rbuf[5], rbuf[6], rbuf[7]))
 	print(string.format("body:%d %d %d %d %d %d %d %d", rbuf[8], rbuf[9], rbuf[10], rbuf[11], rbuf[12], rbuf[13], rbuf[14], rbuf[15]))
 	print(string.format("body:%d %d %d %d %d %d %d %d", rbuf[16], rbuf[17], rbuf[18], rbuf[19], rbuf[20], rbuf[21], rbuf[22], rbuf[23]))
@@ -266,7 +267,7 @@ function test_write_hid()
 		timer.every(
 		0.1,
 		function()
-			write_cmd("motor", 0x7, motor_power.a, motor_power.b, motor_power.c)
+			M.write_cmd("motor", 0x7, motor_power.a, motor_power.b, motor_power.c)
 			print("motor power:", motor_power.a, motor_power.b, motor_power.c)
 		end,
 		50
@@ -297,7 +298,7 @@ function test_write_hid()
 		function()
 			local a = math.ceil(led_power.a)
 			local data = (a << 1) + led_power.b
-			write_cmd("led", 0x7, data, 0, 0)
+			M.write_cmd("led", 0x7, data, 0, 0)
 			print("led power:", led_power.a, led_power.b, data)
 		end,
 		50
@@ -326,7 +327,7 @@ function test_write_hid()
 		timer.every(
 		0.1,
 		function()
-			write_cmd("marquee", 0x3, marquee_power.a, marquee_power.b, 0)
+			M.write_cmd("marquee", 0x3, marquee_power.a, marquee_power.b, 0)
 			--print("marquee power:", marquee_power.a, marquee_power.b, 0)
 		end,
 		50
@@ -349,3 +350,5 @@ function test_write_hid()
 	marquee_move1()
 	marquee_move2()
 end
+
+return M

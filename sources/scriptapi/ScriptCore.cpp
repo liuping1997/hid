@@ -6,6 +6,7 @@
 #include "ApplicationAPI.hpp"
 #include "ConsoleAPI.hpp"
 #include "HidAPI.hpp"
+#include "lfs.h"
 #include <filesystem>
 
 using namespace std;
@@ -20,15 +21,17 @@ namespace Lua
 	{
 		L = luaL_newstate();
 		luaL_openlibs(L);
+		luaopen_lfs(L);
 		registerAPI(L);
 
+		// load main.lua
 		array<string,4> paths = {
-			"./scripts/main.lua",
-			"./main.lua",
-			"../scripts/main.lua",
-			"../../scripts/main.lua"
+			"./scripts/bootstrap.lua",
+			"./bootstrap.lua",
+			"../scripts/bootstrap.lua",
+			"../../scripts/bootstrap.lua"
 		};
-		string path = paths[0];
+		auto path = paths[0];
 		for (auto p : paths)
 		{
 			if (fs::exists(p))
@@ -68,6 +71,11 @@ namespace Lua
 		console_register(l);
 		hid_register(l);
 		Lua::L = l;
+	}
+
+	void eventLoop(double dt)
+	{
+		call("event_loop", dt, 0);
 	}
 
 	void call(const char* func)

@@ -81,7 +81,7 @@ int main (int argc, char **argv)
 		auto now = system_clock::now();
 		duration<double> diff = now - start;
 		start = now;
-		Lua::call("event_loop", diff.count(), 0);
+		Lua::eventLoop(diff.count());
 		if (_kbhit())
 		{
 			char c = _getch();

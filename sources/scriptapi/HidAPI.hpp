@@ -816,8 +816,7 @@ namespace Lua
 		/* device handle metatable */
 		hidapi_create_hiddevice_obj(L);
 		/* library */
-		luaL_newlib(L, hidapi_func_list);
-		luaL_requiref(L, "hid", hid_functions_bind, 0);
+		luaL_requiref(L, "hidapi", hid_functions_bind, 0);
 
 		lua_pushliteral(L, "_VERSION");
 		lua_pushliteral(L, MODULE_VERSION);

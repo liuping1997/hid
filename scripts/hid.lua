@@ -1,21 +1,32 @@
-local hid = require 'luahidapi'
-
-local gb = hid.open(0x04d8, 0xfcf0)
-
+local hidapi = require("hidapi")
+local handle = nil
+local id = 0
 local adapter_command = {
   address_list = 0x01,
   data = 0x02
 }
 
-local id = 0
+local function init()
+    hidapi.init()
+end
+
+local function open()
+    handle = hidapi.open(0x051A, 0x511B)
+end
+
+local function close()
+    hidapi.close()
+    handle = nil
+end
+
 local function next_packet_id()
   id = id + 1
   id = id % 0xFFFF
   return id
 end
 
-local function send_packet(data)
-  local id = next_packet_id()
+local function send_table(data)
+  --[[local id = next_packet_id()
 
   print('id', id)
 
@@ -30,10 +41,10 @@ local function send_packet(data)
   for _, byte in ipairs(data) do
     table.insert(packet, byte)
   end
+  ]]
+  print(table.unpack(data))
 
-  print(table.unpack(packet))
-
-  gb:write(string.char(table.unpack(packet)))
+  api:write(string.char(table.unpack(data)))
 end
 
 local function send_message(message)
@@ -101,7 +112,7 @@ local function handle_received_message_or_something(message)
 end
 
 while true do
-  local rx = gb:read(61)
+  local rx = handle:read(61)
   if rx and #rx > 1 then
     handle_received_message_or_something(rx)
 
