@@ -10,7 +10,7 @@
 #include <array>
 #include "hidapi.h"
 
-class CHidDevice
+class AsyncHid
 {
 public:
 	using uchar = unsigned char;
@@ -31,12 +31,16 @@ private:
 	std::shared_ptr<std::thread> mWorkerThread = nullptr;
 
 public:
-	CHidDevice(void);
-	~CHidDevice(void);
+	AsyncHid();
 
-	bool open(unsigned short usVID, unsigned short usPID);
+	static AsyncHid& Get()
+	{
+		static AsyncHid m_instance;
+		return m_instance;
+	}
+	void init();
+	bool open(ushort usVID, ushort usPID);
 	void close();
-	bool reset() { return true; }
 	void write(const Buffer& buf);
 	void write(const Buffer&& buf);
 	void read(ReadBuffer& buf);

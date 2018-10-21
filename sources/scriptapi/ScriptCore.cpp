@@ -6,6 +6,8 @@
 #include "ApplicationAPI.hpp"
 #include "ConsoleAPI.hpp"
 #include "HidAPI.hpp"
+#include "AsyncHidAPI.hpp"
+#include "UtilsAPI.hpp"
 #include "lfs.h"
 #include <filesystem>
 
@@ -70,6 +72,8 @@ namespace Lua
 		application_register(l);
 		console_register(l);
 		hid_register(l);
+		async_hid_register(l);
+		utils_register(l);
 		Lua::L = l;
 	}
 

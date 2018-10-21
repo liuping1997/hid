@@ -10,6 +10,9 @@
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#pragma comment (lib,"hid.lib")
+#pragma comment (lib,"Setupapi.lib")
+#pragma warning(disable:4244)
 #endif
 
 #ifndef TRUE

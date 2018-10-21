@@ -1,5 +1,4 @@
 #include "Exports.hpp"
-#include "HidDevice.hpp"
 #include "Logger.hpp"
 #include "Application.hpp"
 #include "ScriptAPI/ScriptCore.hpp"
@@ -22,27 +21,23 @@ extern "C"
 {
 	bool OpenDevice(unsigned short usVID, unsigned short usPID)
 	{
-		return app->openDevice(usVID, usPID);
+		return false;
 	}
 
 	void CloseDevice()
 	{
-		return app->closeDevice();
 	}
 
 	void ResetDevice()
 	{
-		app->getHID()->reset();
 	}
 
 	void WriteCmd(uchar *wbuf,int len)
 	{
-		app->write(wbuf, len);
 	}
 
 	void ReadCmd(uchar cmd, int len)
 	{
-		app->read(cmd, len);
 	}
 }
 
@@ -67,7 +62,6 @@ int main (int argc, char **argv)
 	boost::crc_optimal<16, 0x1021, 0, 0, true, true> crc_ccitt2;
 	crc_ccitt2 = std::for_each(data, data + data_len, crc_ccitt2);
 	spdlog::info("{0:x}",crc_ccitt2.checksum());
-
 	
 	fs::path apppath = argv[0];
 	fs::current_path(apppath.remove_filename());
@@ -117,6 +111,10 @@ int main (int argc, char **argv)
 			else if (c == '5')
 			{
 				Lua::call("print_hid");
+			}
+			else if (c == 't')
+			{
+				Lua::call("test_func");
 			}
 		}
 	}

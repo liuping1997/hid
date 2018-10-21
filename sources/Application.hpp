@@ -1,7 +1,7 @@
 #pragma once 
 
 #include "Exports.hpp"
-#include "HidDevice.hpp"
+#include "AsyncHid.hpp"
 #include "Logger.hpp"
 #include "ScriptAPI/ScriptCore.hpp"
 #include <filesystem>
@@ -16,9 +16,6 @@ class Application
 	using uchar = unsigned char;
 	using ushort = unsigned short;
 	using uint = unsigned int;
-
-private:
-	shared_ptr<CHidDevice> mHID = make_shared<CHidDevice>();
 
 public:
 	Application()
@@ -40,48 +37,9 @@ public:
 	
 		Lua::initialize();
 	}
-
 	static void close()
 	{
 		Lua::close();
-		Application::instance().getHID()->quit();
-	}
-
-	shared_ptr<CHidDevice> getHID()
-	{
-		return mHID;
-	}
-
-	bool openDevice(unsigned short usVID, unsigned short usPID)
-	{
-		bool ret = mHID->open(usVID,usPID);
-		ret ? spdlog::info("open hid success"): spdlog::error("open hid failure");
-		return ret;
-	}
-
-	void closeDevice()
-	{
-		spdlog::info("close hid success");
-		mHID->close();
-	}
-
-	uchar* read(uchar cmd, int len)
-	{
-		static CHidDevice::ReadBuffer buf;
-		len = std::clamp(len, 0, 0x26);
-		buf[6] = cmd;
-		buf[buf.size() - 1] = len;
-		mHID->read(buf);
-		return buf.data();
-	}
-	
-	void write(const uchar *cmd,int len)
-	{
-		auto now = system_clock::now();
-		CHidDevice::Buffer buf;
-		memcpy_s(buf.data(), len, cmd, len);
-		buf[buf.size() - 1] = len;
-		mHID->write(std::move(buf));
 	}
 };
 

@@ -1,5 +1,4 @@
-#include "HidSdk.hpp"
-#include "HidDevice.hpp"
+#include "AsyncHid.hpp"
 #include "Logger.hpp"
 #include <iostream>
 #include <thread>
@@ -13,17 +12,17 @@
 using namespace std::chrono;
 #pragma warning(disable:4996)
 
-CHidDevice::CHidDevice(void)
+AsyncHid::AsyncHid(void)
+{
+}
+
+void AsyncHid::init()
 {
 	if (hid_init())
 		spdlog::error("hid init failure");
 }
 
-CHidDevice::~CHidDevice(void)
-{
-}
-
-bool CHidDevice::open(ushort usVID, ushort usPID)
+bool AsyncHid::open(ushort usVID, ushort usPID)
 {
 	if (mWorkerThread != nullptr)
 	{
@@ -34,7 +33,7 @@ bool CHidDevice::open(ushort usVID, ushort usPID)
 		}
 	}
 	mRunning = true;
-	mWorkerThread = std::make_shared<std::thread>(&CHidDevice::update, this);
+	mWorkerThread = std::make_shared<std::thread>(&AsyncHid::update, this);
 
 	struct hid_device_info *devs, *cur_dev;
 	devs = hid_enumerate(0x0, 0x0);
@@ -55,6 +54,7 @@ bool CHidDevice::open(ushort usVID, ushort usPID)
 	mOpened = mHandle > 0;
 	if (!mHandle) {
 		spdlog::error("unable to open device");
+		return false;
 	}
 	// Read the Manufacturer String
 	int res = 0;
@@ -70,39 +70,10 @@ bool CHidDevice::open(ushort usVID, ushort usPID)
 	// Set the hid_read() function to be non-blocking.
 	hid_set_nonblocking(mHandle, 1);
 
-	unsigned char buf[256] = {0};
-	// Send a Feature Report to the device
-	buf[0] = 0x2;
-	buf[1] = 0xa0;
-	buf[2] = 0x0a;
-	buf[3] = 0x00;
-	buf[4] = 0x00;
-	res = hid_send_feature_report(mHandle, buf, 65);
-	if (res < 0) {
-		spdlog::error("Unable to send a feature report.");
-	}
-
-	memset(buf, 0, sizeof(buf));
-
-	// Read a Feature Report from the device
-	buf[0] = 0x2;
-	res = hid_get_feature_report(mHandle, buf, sizeof(buf));
-	if (res < 0) {
-		spdlog::error("Unable to get a feature report.");
-		std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-		spdlog::info("{}", conv.to_bytes(std::wstring(hid_error(mHandle))));
-	}
-	else {
-		// Print out the returned buffer.
-		spdlog::info("Feature Report\n   ");
-		for (int i = 0; i < res; i++)
-			spdlog::info("{}hhx ", buf[i]);
-	}
-
 	return mOpened;
 }
 
-void CHidDevice::close()
+void AsyncHid::close()
 {
 	try
 	{
@@ -122,7 +93,7 @@ void CHidDevice::close()
 	}
 }
 
-bool CHidDevice::flush()
+bool AsyncHid::flush()
 {
 	if (!mOpened)
 		return false;
@@ -141,19 +112,19 @@ bool CHidDevice::flush()
 	return true;
 }
 
-void CHidDevice::write(const Buffer&&buf)
+void AsyncHid::write(const Buffer&&buf)
 {
 	std::lock_guard<std::mutex> guard(mMutex);
 	mWriteBufs.push(buf);
 }
 
-void CHidDevice::write(const Buffer&buf)
+void AsyncHid::write(const Buffer&buf)
 {
 	std::lock_guard<std::mutex> guard(mMutex);
 	mWriteBufs.push(buf);
 }
 
-void CHidDevice::read(ReadBuffer& buf)
+void AsyncHid::read(ReadBuffer& buf)
 {
 	if (!mOpened)
 	{
@@ -164,14 +135,14 @@ void CHidDevice::read(ReadBuffer& buf)
 	buf = mReadBuf;
 }
 
-void CHidDevice::quit()
+void AsyncHid::quit()
 {
 	mRunning = false;
 	if (mWorkerThread != nullptr && mWorkerThread->joinable())
 		mWorkerThread->join();
 }
 
-bool CHidDevice::fetch()
+bool AsyncHid::fetch()
 {
 	if (!mOpened)
 		return false;
@@ -190,7 +161,7 @@ bool CHidDevice::fetch()
 	return res > 0;
 }
 
-bool CHidDevice::notifyForRead()
+bool AsyncHid::notifyForRead()
 {
 	if (!mOpened)
 		return false;
@@ -209,7 +180,7 @@ bool CHidDevice::notifyForRead()
 	return res > 0;
 }
 
-void CHidDevice::update()
+void AsyncHid::update()
 {
 	// µÈ´ý»½ÐÑ
 	while (!mRunning)
@@ -224,7 +195,7 @@ void CHidDevice::update()
 		flush();
 		auto end = system_clock::now(); 
 		auto duration = duration_cast<milliseconds>(end - start);
-		auto value = static_cast<long long>(max(0, 1000.0f / mLimtedHZ - duration.count()));
+		auto value = static_cast<long long>(std::max(0.0f, (1000.0f / mLimtedHZ) - duration.count()));
 		std::this_thread::sleep_for(std::chrono::milliseconds(value));
 		//spdlog::info("rw loop cost:{0:d}ms",value);
 	}
