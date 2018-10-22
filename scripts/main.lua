@@ -2,6 +2,8 @@ local app = require("app")
 local console = require("console")
 local timer = require("timer")
 local hid = require("hid")
+local utils = require("utils")
+local http = require("http")
 
 local M = {}
 -- 读缓冲区
@@ -67,24 +69,24 @@ function M.init()
 	console.set_cursor_visible(false)
 	console.set_window_size(120, 40)
 	console.set_buffer_size(120, 20)
+	http.init("0.0.0.0", 8011)
+	M.restful()
 	--hid.init()
 end
 
 function M.event_loop(dt)
-	--M.read_hid()
-	--M.print_hid()
+	M.read_hid()
+	M.print_hid()
 	timer.update(dt)
 end
 
 function M.open_hid()
-	-- validhid = hid.open()
-	validhid = app.open(0x051A, 0x511B)
+	validhid = hid.open()
 end
 
 function M.close_hid()
 	validhid = false
-	app.close()
-	--hid.close()
+	hid.close()
 end
 
 local function is_on(d)
@@ -162,7 +164,7 @@ local function parse_short(d)
 	return d >> 8, d & 0xff
 end
 
-function M.write_cmd(name, id, data1, data2, data3)
+function M.write_hid(name, id, data1, data2, data3)
 	if validhid == false then
 		return
 	end
@@ -188,17 +190,16 @@ function M.write_cmd(name, id, data1, data2, data3)
 	end
 	--print(name, type, data1, data2, data3, d[1], d[2], d[3], d[4])
 	device.data = string.char(d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10])
-	--return hid.write(device.data)
-	return app.write(device.data, len)
+	return hid.write(device.data)
 end
 
 function M.read_hid()
 	if validhid == false then
 		return
 	end
-	local cmd = 0xb5
+
 	local len = 0x26
-	local buf = app.read(cmd, len)
+	local buf = hid.read(len)
 	-- shift array + 1
 	rbuf[01],
 		rbuf[02],
@@ -242,6 +243,25 @@ function M.read_hid()
 		rbuf[40],
 		rbuf[41],
 		rbuf[42] = string.byte(buf, 1, len)
+end
+
+
+function M.restful()
+	http.get("/hid/open",function(params)
+		return (M.open_hid() and "true") or "false"
+	end)
+	http.get("/hid/close",function(params)
+		M.close_hid()
+		return "true"
+	end)
+	http.get("/hid/read",function(params)
+		M.read_hid()
+		return string.char("32","0x4","03")
+	end)
+	http.get("/hid/write",function(params)
+		M.write_hid()
+		return "true"
+	end)
 end
 
 function M.hid_read_by_id(id,mask)
@@ -360,6 +380,14 @@ function test_write_hid()
 	end
 	marquee_move1()
 	marquee_move2()
+end
+
+function test_func()
+	--[[
+	local data = utils.crc16_kermit(string.char(0,0,2,0,2,0,0xb5))
+	local h,l = string.byte(data,1,2)
+	print(string.format("%x%x",h,l))
+	]]
 end
 
 return M

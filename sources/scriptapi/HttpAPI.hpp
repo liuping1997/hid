@@ -4,7 +4,6 @@
 #include <httplib.h>
 #include "Logger.hpp"
 #include <boost/lockfree/spsc_queue.hpp>
-#include <boost/circular_buffer.hpp>
 
 namespace Lua
 {
@@ -24,11 +23,13 @@ namespace Lua
 	{
 		const httplib::Request* req;
 		bool ready = false;
-		std::condition_variable* cv;
-		std::mutex* mutex;
+		int lua_callback = -1;
+		std::shared_ptr< std::condition_variable> cv;
+		std::shared_ptr<std::mutex> m;
+		std::string context;
 	};
 
-	inline static spsc_queue<HttpRequestEvent, capacity<10>, fixed_sized<true>> s_http_req_evts;
+	inline static spsc_queue<HttpRequestEvent*, capacity<10>, fixed_sized<true>> s_http_req_evts;
 
 	static HttpServer_Obj *check_HttpServer_Obj(lua_State *L)
 	{
@@ -38,7 +39,7 @@ namespace Lua
 		return o;
 	}
 
-	static int httplib_create(lua_State *L)
+	static int http_create(lua_State *L)
 	{
 		int n = lua_gettop(L);  /* number of arguments */
 		if (n != 2)
@@ -51,101 +52,132 @@ namespace Lua
 
 		HttpServer_Obj* o = static_cast<HttpServer_Obj*>(lua_newuserdata(L, sizeof(HttpServer_Obj)));
 		o->svr = new httplib::Server();
-		o->svr->listen(host, port);
+		std::thread* t = new std::thread([=]()
+		{
+			o->svr->listen(host, port);
+		});
 		luaL_getmetatable(L,  HTTP_LIB_SERVER);
 		lua_setmetatable(L, -2);
 
 		return 1;
 	}
 
-	static int httplib_get_route(lua_State *L)
-	{
-		return 0;
-	}
-
-	static int httplib_post_route(lua_State *L)
+	static int http_route(lua_State *L)
 	{
 		HttpServer_Obj *o = check_HttpServer_Obj(L);
 		int lua_callback = luaL_ref(L, LUA_REGISTRYINDEX);
-		o->svr->Post("/*", [=](const Request& req, Response& res)
+		auto callback = [=](const Request& req, Response& res)
 		{
-			HttpRequestEvent event;
-			event.cv = new std::condition_variable();
-			event.mutex = new std::mutex();
-			if (s_http_req_evts.write_available() > 0)
+			if (s_http_req_evts.write_available() == 0)
 			{
-				s_http_req_evts.push(event);
-				std::unique_lock<std::mutex> lk(*event.mutex);
-				event.req = &req;
-				event.cv->wait(lk, [&]{return event.ready;});
+				spdlog::error("route error.sq is not eough.");
+				return;
 			}
-			res.set_content(lua_tostring(L, -1), "text/plain");
-		});
+			HttpRequestEvent evt;
+			evt.cv = std::make_shared<std::condition_variable>();
+			evt.m = std::make_shared<std::mutex>();
+			std::unique_lock<std::mutex> lk(*evt.m);
+			evt.req = &req;
+			evt.lua_callback = lua_callback;
+			s_http_req_evts.push(&evt);
+			evt.cv->wait(lk, [&] {return evt.ready; });
+			lk.unlock();
+			evt.cv->notify_one();
+			res.set_content(evt.context, "text/plain");
+		};
+		o->svr->Get("/(\\w*/)*(\\w*)*/?", callback);
+		o->svr->Post("/(\\w*/)*(\\w*)*/?", callback);
 		return 0;
 	}
 
 	static void http_event_loop(lua_State* L)
 	{
-		if (s_http_req_evts.read_available() > 0)
+		if (s_http_req_evts.read_available() == 0)
 		{
-			HttpRequestEvent evt;
-			while (s_http_req_evts.pop(evt))
+			return;
+		}
+
+		HttpRequestEvent* evt_ptr;
+		while (s_http_req_evts.pop(evt_ptr))
+		{
+			HttpRequestEvent& evt = *evt_ptr;
+			lua_rawgeti(L, LUA_REGISTRYINDEX, evt.lua_callback);
+			int n = evt.req->params.size();
+			lua_pushstring(L, evt.req->method.c_str());
+			lua_pushstring(L, evt.req->path.c_str());
+			lua_newtable(L);
+			for (auto[k, v] : evt.req->params)
 			{
-				int lua_callback = 0;
-				lua_rawgeti(L, LUA_REGISTRYINDEX, lua_callback);
-				int n = evt.req->params.size();
-				lua_pushstring(L, evt.req->path.c_str());
-				lua_newtable(L);
-				for (auto[k, v] : evt.req->params)
-				{
-					lua_pushstring(L, k.c_str());
-					lua_pushstring(L, v.c_str());
-					lua_settable(L, -3);
-				}
-				if (lua_pcall(L, 2, 1, 0) != LUA_OK)
-				{
-					spdlog::error(lua_tostring(L, -1));
-				}
+				lua_pushstring(L, k.c_str());
+				lua_pushstring(L, v.c_str());
+				lua_settable(L, -3);
 			}
+			{
+				std::lock_guard<std::mutex> lk(*(evt.m));
+				evt.ready = true;
+			}
+			if (lua_pcall(L, 3, 1, 0) != LUA_OK)
+			{
+				spdlog::error(lua_tostring(L, -1));
+			}
+			if (lua_type(L, -1) == LUA_TSTRING)
+			{
+				evt.context = luaL_checkstring(L, -1);
+			}
+			else
+			{
+				evt.context = "return error";
+			}
+			evt.cv->notify_one();
 		}
 	}
+	
+	static int http_server_meta_gc(lua_State *L)
+	{
+		HttpServer_Obj *o = to_HttpServer_Obj(L);
+		if (o->svr) 
+		{
+			o->svr->stop();
+			delete o->svr;
+			o->svr = NULL;
+		}
+		return 0;
+	}
 
-	static const struct luaL_Reg httplibapi_func_list[] = {
-		{"create", httplib_create},
-		{"get", httplib_get_route},
-		{"post", httplib_post_route},
+	static const struct luaL_Reg http_server_meta_reg[] = {
+		{"route", http_route},
+		{"__gc", http_server_meta_gc},
 		{NULL, NULL},
 	};
 
-	LUALIB_API int httplib_functions_bind(lua_State *L)
-	{
-		luaL_checkversion(L);
-		luaL_newlib(L, httplibapi_func_list);
-		return 1;
+	static const struct luaL_Reg http_func_list[] = {
+			{"create", http_create},
+			{NULL, NULL},
+	};
+
+	static void http_create_server_obj(lua_State *L) {
+		luaL_newmetatable(L, HTTP_LIB_SERVER);
+		lua_pushvalue(L, -1);
+		lua_setfield(L, -2, "__index");
+		luaL_setfuncs(L, http_server_meta_reg, 0);
 	}
 
+	LUALIB_API int http_functions_bind(lua_State *L)
+	{
+		luaL_checkversion(L);
+		luaL_newlib(L, http_func_list);
+		return 1;
+	}
 	/*----------------------------------------------------------------------
 	 * main entry function; library registration
 	 *----------------------------------------------------------------------
 	 */
-
-	int httplib_register(lua_State *L)
+	int http_register(lua_State *L)
 	{
-		/* enum metatable */
-		hidapi_create_hidenum_obj(L);
-		/* device handle metatable */
-		hidapi_create_hiddevice_obj(L);
+		/* http server handle metatable */
+		http_create_server_obj(L);
 		/* library */
-		luaL_requiref(L, "hidapi", hid_functions_bind, 0);
-
-		lua_pushliteral(L, "_VERSION");
-		lua_pushliteral(L, MODULE_VERSION);
-		lua_settable(L, -3);
-
-		lua_pushliteral(L, "_TIMESTAMP");
-		lua_pushliteral(L, MODULE_TIMESTAMP);
-		lua_settable(L, -3);
-
+		luaL_requiref(L, "httpapi", http_functions_bind, 0);
 		return 1;
 	}
 }

@@ -75,6 +75,7 @@ namespace Lua
 		hid_register(l);
 		async_hid_register(l);
 		utils_register(l);
+		http_register(l);
 		Lua::L = l;
 	}
 
