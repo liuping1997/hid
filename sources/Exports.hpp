@@ -8,9 +8,9 @@
 
 extern "C"
 {
-	HIDSDK_API bool OpenDevice(unsigned short usVID, unsigned short usPID);
-	HIDSDK_API void CloseDevice();
-	HIDSDK_API void ResetDevice();
-	HIDSDK_API void WriteCmd(unsigned char *cmd, int len);
-	HIDSDK_API void ReadCmd(unsigned char cmd, int len);
+	HIDSDK_API bool usb_hid_open(unsigned short usVID, unsigned short usPID);
+	HIDSDK_API void usb_hid_close();
+	HIDSDK_API void usb_hid_write(const unsigned char *buf, int len);
+	HIDSDK_API void usb_hid_read_all(unsigned char* buf, int len);
+	HIDSDK_API int usb_hid_read(int id, int mask);
 }

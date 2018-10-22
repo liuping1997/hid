@@ -79,7 +79,7 @@ namespace Lua
 
 	void eventLoop(double dt)
 	{
-		call("event_loop", dt, 0);
+		call("event_loop", dt);
 	}
 
 	void call(const char* func)
@@ -91,10 +91,9 @@ namespace Lua
 		{
 			spdlog::info(lua_tostring(L, -1));
 		}
-
 	}
 
-	void call(const char* func, double arg, int nresults)
+	void call(const char* func, double arg)
 	{
 		if (!lua_actived)
 			return;
@@ -107,16 +106,33 @@ namespace Lua
 		}
 	}
 
-	void call2Args(const char* func, int arg1, int arg2, int nresults)
+
+	void call2Args(const char* func, int arg1, int arg2)
 	{
 		if (!lua_actived)
 			return;
 		int ret = lua_getglobal(L, func);
 		lua_pushinteger(L, arg1);
 		lua_pushinteger(L, arg2);
-		if (lua_pcall(L, 2, nresults, 0))
+		if (lua_pcall(L, 2, 0, 0))
 		{
 			spdlog::info(lua_tostring(L, -1));
 		}
+	}
+
+	int lua_hid_read_int4(int id, int mask)
+	{
+		if (!lua_actived)
+			return -1;
+		int ret = lua_getglobal(L, "hid_read_by_id");
+		lua_pushinteger(L, id);
+		lua_pushinteger(L, mask);
+
+		if (lua_pcall(L, 2, 1, 0) != LUA_OK)
+		{
+			spdlog::error(lua_tostring(L, -1));
+			return -1;
+		}
+		return static_cast<int>(lua_tointeger(L, -1));
 	}
 };

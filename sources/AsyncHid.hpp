@@ -44,6 +44,7 @@ public:
 	void write(const Buffer& buf);
 	void write(const Buffer&& buf);
 	void read(ReadBuffer& buf);
+	void read(uchar* buf, int len);
 	void quit();
 
 private:

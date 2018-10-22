@@ -20,9 +20,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\sources\Application.cpp" />
-    <ClCompile Include="..\sources\HidDevice.cpp" />
+    <ClCompile Include="..\sources\AsyncHid.cpp" />
     <ClCompile Include="..\sources\HidMain.cpp" />
-    <ClCompile Include="..\sources\HidSdk.cpp" />
+    <ClCompile Include="..\sources\scriptapi\ScriptCore.cpp" />
+    <ClCompile Include="..\thirdparty\hidapi\windows\hid.c" />
+    <ClCompile Include="..\thirdparty\lfs\lfs.c" />
     <ClCompile Include="..\thirdparty\lua\lapi.c" />
     <ClCompile Include="..\thirdparty\lua\lauxlib.c" />
     <ClCompile Include="..\thirdparty\lua\lbaselib.c" />
@@ -60,13 +62,20 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\sources\Application.hpp" />
+    <ClInclude Include="..\sources\AsyncHid.hpp" />
     <ClInclude Include="..\sources\Exports.hpp" />
-    <ClInclude Include="..\sources\HidDevice.hpp" />
-    <ClInclude Include="..\sources\HidSdk.hpp" />
     <ClInclude Include="..\sources\Logger.hpp" />
     <ClInclude Include="..\sources\Lua.hpp" />
     <ClInclude Include="..\sources\LuaBind.hpp" />
     <ClInclude Include="..\sources\Proto.hpp" />
+    <ClInclude Include="..\sources\scriptapi\ApplicationAPI.hpp" />
+    <ClInclude Include="..\sources\scriptapi\AsyncHidAPI.hpp" />
+    <ClInclude Include="..\sources\scriptapi\ConsoleAPI.hpp" />
+    <ClInclude Include="..\sources\scriptapi\HidAPI.hpp" />
+    <ClInclude Include="..\sources\scriptapi\ScriptCore.hpp" />
+    <ClInclude Include="..\sources\scriptapi\UtilsAPI.hpp" />
+    <ClInclude Include="..\thirdparty\hidapi\hidapi\hidapi.h" />
+    <ClInclude Include="..\thirdparty\lfs\lfs.h" />
     <ClInclude Include="..\thirdparty\lua\lapi.h" />
     <ClInclude Include="..\thirdparty\lua\lauxlib.h" />
     <ClInclude Include="..\thirdparty\lua\lcode.h" />
@@ -94,6 +103,9 @@
     <ClInclude Include="..\thirdparty\lua\lundump.h" />
     <ClInclude Include="..\thirdparty\lua\lvm.h" />
     <ClInclude Include="..\thirdparty\lua\lzio.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\sources\ReadMe.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{28EECD3A-27D9-4831-820D-96904E140630}</ProjectGuid>
@@ -166,7 +178,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;HIDSDK_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\thirdparty\lua;$(SolutionDir)..\thirdparty\spdlog\include;$(SolutionDir)..\sources;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\thirdparty\lua;$(SolutionDir)..\thirdparty\spdlog\include;$(SolutionDir)..\sources;$(SolutionDir)..\thirdparty\boost\include\boost-1_68;$(SolutionDir)..\thirdparty\lfs;$(SolutionDir)..\thirdparty\hidapi\hidapi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -182,7 +194,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;HIDSDK_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\thirdparty\lua;$(SolutionDir)..\thirdparty\spdlog\include;$(SolutionDir)..\sources;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\thirdparty\lua;$(SolutionDir)..\thirdparty\spdlog\include;$(SolutionDir)..\sources;$(SolutionDir)..\thirdparty\boost\include\boost-1_68;$(SolutionDir)..\thirdparty\lfs;$(SolutionDir)..\thirdparty\hidapi\hidapi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -200,7 +212,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;HIDSDK_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\thirdparty\lua;$(SolutionDir)..\thirdparty\spdlog\include;$(SolutionDir)..\sources;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\thirdparty\lua;$(SolutionDir)..\thirdparty\spdlog\include;$(SolutionDir)..\sources;$(SolutionDir)..\thirdparty\boost\include\boost-1_68;$(SolutionDir)..\thirdparty\lfs;$(SolutionDir)..\thirdparty\hidapi\hidapi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -219,7 +231,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;HIDSDK_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\thirdparty\lua;$(SolutionDir)..\thirdparty\spdlog\include;$(SolutionDir)..\sources;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\thirdparty\lua;$(SolutionDir)..\thirdparty\spdlog\include;$(SolutionDir)..\sources;$(SolutionDir)..\thirdparty\boost\include\boost-1_68;$(SolutionDir)..\thirdparty\lfs;$(SolutionDir)..\thirdparty\hidapi\hidapi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>

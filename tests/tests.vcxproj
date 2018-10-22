@@ -20,9 +20,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\sources\Application.cpp" />
-    <ClCompile Include="..\sources\HidDevice.cpp" />
+    <ClCompile Include="..\sources\AsyncHid.cpp" />
     <ClCompile Include="..\sources\HidMain.cpp" />
-    <ClCompile Include="..\sources\HidSdk.cpp" />
     <ClCompile Include="..\sources\scriptapi\ScriptCore.cpp" />
     <ClCompile Include="..\thirdparty\hidapi\windows\hid.c" />
     <ClCompile Include="..\thirdparty\lfs\lfs.c" />
@@ -63,13 +62,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\sources\Application.hpp" />
+    <ClInclude Include="..\sources\AsyncHid.hpp" />
     <ClInclude Include="..\sources\Exports.hpp" />
-    <ClInclude Include="..\sources\HidDevice.hpp" />
-    <ClInclude Include="..\sources\HidSdk.hpp" />
     <ClInclude Include="..\sources\Logger.hpp" />
     <ClInclude Include="..\sources\LuaBind.hpp" />
     <ClInclude Include="..\sources\Proto.hpp" />
     <ClInclude Include="..\sources\scriptapi\ApplicationAPI.hpp" />
+    <ClInclude Include="..\sources\scriptapi\AsyncHidAPI.hpp" />
     <ClInclude Include="..\sources\scriptapi\ConsoleAPI.hpp" />
     <ClInclude Include="..\sources\scriptapi\HidAPI.hpp" />
     <ClInclude Include="..\sources\scriptapi\ScriptCore.hpp" />

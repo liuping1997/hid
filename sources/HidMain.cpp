@@ -1,6 +1,7 @@
 #include "Exports.hpp"
 #include "Logger.hpp"
 #include "Application.hpp"
+#include "AsyncHid.hpp"
 #include "ScriptAPI/ScriptCore.hpp"
 #include <Windows.h>
 #include <conio.h>
@@ -19,25 +20,35 @@ using uchar = unsigned char;
 
 extern "C"
 {
-	bool OpenDevice(unsigned short usVID, unsigned short usPID)
+	void usb_hid_int()
 	{
-		return false;
+		AsyncHid::Get().init();
 	}
 
-	void CloseDevice()
+	bool usb_hid_open(ushort usVID, ushort usPID)
 	{
+		return AsyncHid::Get().open(usVID, usPID);
 	}
 
-	void ResetDevice()
+	void usb_hid_close()
 	{
+		AsyncHid::Get().close();
 	}
 
-	void WriteCmd(uchar *wbuf,int len)
+	void usb_hid_write(const uchar *wbuf,int len)
 	{
+		AsyncHid::Buffer buf;
+		memcpy_s(buf.data(), buf.size(), wbuf, len);
+		AsyncHid::Get().write(buf);
 	}
 
-	void ReadCmd(uchar cmd, int len)
+	void usb_hid_read_all(uchar* buf, int len)
 	{
+		AsyncHid::Get().read(buf, len);
+	}
+	int usb_hid_read(int id, int mask)
+	{
+		return Lua::lua_hid_read_int4(id, mask);
 	}
 }
 

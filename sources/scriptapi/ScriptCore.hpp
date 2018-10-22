@@ -9,6 +9,7 @@ namespace Lua
 	void eventLoop(double dt);
 	void registerAPI(lua_State *L);
 	void call(const char* func);
-	void call(const char* func, double arg, int nresults);
-	void call2Args(const char* func, int arg1, int arg2, int nresults);
+	void call(const char* func, double arg);
+	void call2Args(const char* func, int arg1, int arg2);
+	int lua_hid_read_int4(int id, int mask);
 };

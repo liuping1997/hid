@@ -124,6 +124,17 @@ void AsyncHid::write(const Buffer&buf)
 	mWriteBufs.push(buf);
 }
 
+void AsyncHid::read(uchar* buf, int len)
+{
+	if (!mOpened)
+	{
+		spdlog::error("read error. hid not opened");
+		return;
+	}
+	std::lock_guard<std::mutex> guard(mMutex);
+	memcpy_s(buf, len, mReadBuf.data(), mReadBuf.size());
+}
+
 void AsyncHid::read(ReadBuffer& buf)
 {
 	if (!mOpened)

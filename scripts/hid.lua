@@ -1,5 +1,5 @@
 local M = {}
-local hidapi = require("hidapi")
+local hidapi = require("async_hidapi")
 local ins = nil
 local id = 0
 local adapter_command = {
@@ -8,25 +8,25 @@ local adapter_command = {
 }
 
 function M.init()
-    hidapi.init()
+  hidapi.init()
 end
 
 function M.open()
-    ins = hidapi.open(0x051A, 0x511B)
-    if ins == nil then
-      print("open hid failure")
-    end
-    return ins ~= nil
+  ins = hidapi.open(0x051A, 0x511B)
+  if ins == nil then
+    print("open hid failure")
+  end
+  return ins ~= nil
 end
 
 function M.close()
-    if ins ~= nil then
-      ins:close()
-    end
-    ins = nil
+  if ins ~= true then
+    ins.close()
+  end
+  ins = nil
 end
 
-local function next_packet_id()
+function M.next_packet_id()
   id = id + 1
   id = id % 0xFFFF
   return id
@@ -49,15 +49,15 @@ function M.send_packet(data)
   end
   ]]
   print(table.unpack(data))
-  hidapi:write(string.char(table.unpack(data)))
+  hidapi.write(string.char(table.unpack(data)))
 end
 
 function M.write(data)
-  hidapi:write(data)
+  hidapi.write(data)
 end
 
 function M.read(len)
-  return hidapi:read(len)
+  return hidapi.read(len)
 end
 
 function M.send_message(message)
@@ -81,64 +81,24 @@ function M.send_message(message)
   send_packet(message_bytes)
 end
 
---[[
-send_message({
-  source = 0xE4,
-  destination = 0xFF,
-  data = {
-    0x01
-  }
-})
-]]
-    -- function onPacketReceived(packet) {
-    --     var reader = new stream.Reader(packet);
-    --     var type = reader.readUInt8();
-    --
-    --     if (type == COMMAND_DATA) {
-    --         var status = reader.readUInt8();
-    --
-    --         if (status == STATUS_VALID) {
-    --             var length = reader.readUInt8();
-    --
-    --             if (length >= HEADER_LENGTH) {
-    --                 var destination = reader.readUInt8();
-    --                 var ignored = reader.readUInt8();
-    --                 var source = reader.readUInt8();
-    --                 var command = reader.readUInt8();
-    --                 var data = reader.readBytes(packet.length - 7);
-    --
-    --                 self.emit("message", {
-    --                     command: command,
-    --                     source: source,
-    --                     destination: destination,
-    --                     data: data
-    --                 });
-    --             }
-    --         }
-    --     }
-    --
-    --     delete reader;
-    -- }
-
 local function handle_received_message_or_something(message)
-
 end
 
 function test_read_hid()
-    if inside == nil then
-        print("hit not opend")
-      return
+  if ins ~= true then
+    print("hit not opend")
+    return
+  end
+  print("test read hid")
+  ins.write(string.char(00, 00, 02, 00, 02, 00, 0xb5, 0x41, 0x16))
+  local rx = ins.read(65)
+  if rx and #rx > 1 then
+    handle_received_message_or_something(rx)
+    for i = 1, #rx do
+      io.write(string.byte(rx, i) .. ",")
     end
-    print("test read hid")
-    ins:write(string.char(00,00,02,00,02,00,0xb5,0x41,0x16))
-    local rx = ins:read(65)
-    if rx and #rx > 1 then
-      handle_received_message_or_something(rx)
-      for i = 1, #rx do
-        io.write(string.byte(rx, i) .. ',')
-      end
-      io.write('\n')
-    end
+    io.write("\n")
+  end
 end
 
 return M

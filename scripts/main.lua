@@ -1,10 +1,9 @@
-
 local app = require("app")
 local console = require("console")
 local timer = require("timer")
 local hid = require("hid")
 
-local M={}
+local M = {}
 -- 读缓冲区
 local rbuf = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 local validhid = false
@@ -190,7 +189,7 @@ function M.write_cmd(name, id, data1, data2, data3)
 	--print(name, type, data1, data2, data3, d[1], d[2], d[3], d[4])
 	device.data = string.char(d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10])
 	--return hid.write(device.data)
-	return app.write(device.data,len)
+	return app.write(device.data, len)
 end
 
 function M.read_hid()
@@ -202,7 +201,6 @@ function M.read_hid()
 	local buf = app.read(cmd, len)
 	-- shift array + 1
 	rbuf[01],
-		rbuf[01],
 		rbuf[02],
 		rbuf[03],
 		rbuf[04],
@@ -242,7 +240,16 @@ function M.read_hid()
 		rbuf[38],
 		rbuf[39],
 		rbuf[40],
-		rbuf[41] = string.byte(buf, 1, len)
+		rbuf[41],
+		rbuf[42] = string.byte(buf, 1, len)
+end
+
+function M.hid_read_by_id(id,mask)
+	return rbuf[id] & mask
+end
+
+function hid_read_by_id(id,mask)
+	return M.hid_read_by_id(id+1,mask)
 end
 
 local function test_read_hid()
