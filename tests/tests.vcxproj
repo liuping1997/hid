@@ -71,7 +71,9 @@
     <ClInclude Include="..\sources\scriptapi\AsyncHidAPI.hpp" />
     <ClInclude Include="..\sources\scriptapi\ConsoleAPI.hpp" />
     <ClInclude Include="..\sources\scriptapi\HidAPI.hpp" />
+    <ClInclude Include="..\sources\scriptapi\HttpAPI.hpp" />
     <ClInclude Include="..\sources\scriptapi\ScriptCore.hpp" />
+    <ClInclude Include="..\thirdparty\cpp-httplib\httplib.h" />
     <ClInclude Include="..\thirdparty\hidapi\hidapi\hidapi.h" />
     <ClInclude Include="..\thirdparty\lfs\lfs.h" />
     <ClInclude Include="..\thirdparty\lua\lapi.h" />
@@ -173,7 +175,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_CONSOLE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\thirdparty\lua;$(SolutionDir)..\thirdparty\boost\include\boost-1_68;$(SolutionDir)..\thirdparty\lfs;$(SolutionDir)..\thirdparty\hidapi\hidapi;$(SolutionDir)..\thirdparty\spdlog\include;$(SolutionDir)..\sources;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\thirdparty\lua;$(SolutionDir)..\thirdparty\boost\include\boost-1_68;$(SolutionDir)..\thirdparty\lfs;$(SolutionDir)..\thirdparty\hidapi\hidapi;$(SolutionDir)..\thirdparty\httplib;$(SolutionDir)..\thirdparty\spdlog\include;$(SolutionDir)..\sources;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -181,6 +183,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
+      <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -189,7 +192,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_CONSOLE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\thirdparty\lua;$(SolutionDir)..\thirdparty\boost\include\boost-1_68;$(SolutionDir)..\thirdparty\lfs;$(SolutionDir)..\thirdparty\hidapi\hidapi;$(SolutionDir)..\thirdparty\spdlog\include;$(SolutionDir)..\sources;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\thirdparty\lua;$(SolutionDir)..\thirdparty\boost\include\boost-1_68;$(SolutionDir)..\thirdparty\lfs;$(SolutionDir)..\thirdparty\hidapi\hidapi;$(SolutionDir)..\thirdparty\httplib;$(SolutionDir)..\thirdparty\spdlog\include;$(SolutionDir)..\sources;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -197,6 +200,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
+      <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -207,7 +211,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_CONSOLE;NDEBUG;_WINDOWS;_USRDLL;HIDSDK_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\thirdparty\lua;$(SolutionDir)..\thirdparty\boost\include\boost-1_68;$(SolutionDir)..\thirdparty\lfs;$(SolutionDir)..\thirdparty\hidapi\hidapi;$(SolutionDir)..\thirdparty\spdlog\include;$(SolutionDir)..\sources;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\thirdparty\lua;$(SolutionDir)..\thirdparty\boost\include\boost-1_68;$(SolutionDir)..\thirdparty\lfs;$(SolutionDir)..\thirdparty\hidapi\hidapi;$(SolutionDir)..\thirdparty\httplib;$(SolutionDir)..\thirdparty\spdlog\include;$(SolutionDir)..\sources;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -216,6 +220,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(SolutionDir)\HidSdk\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -226,7 +231,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_CONSOLE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\thirdparty\lua;$(SolutionDir)..\thirdparty\boost\include\boost-1_68;$(SolutionDir)..\thirdparty\lfs;$(SolutionDir)..\thirdparty\hidapi\hidapi;$(SolutionDir)..\thirdparty\spdlog\include;$(SolutionDir)..\sources;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\thirdparty\lua;$(SolutionDir)..\thirdparty\boost\include\boost-1_68;$(SolutionDir)..\thirdparty\lfs;$(SolutionDir)..\thirdparty\hidapi\hidapi;$(SolutionDir)..\thirdparty\httplib;$(SolutionDir)..\thirdparty\spdlog\include;$(SolutionDir)..\sources;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -236,6 +241,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
+      <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -16,6 +16,12 @@
     <Filter Include="thirdparty\lfs">
       <UniqueIdentifier>{f488d106-6a47-4b1a-b555-e843ea8f1ae0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="thirdparty\hidapi">
+      <UniqueIdentifier>{8112bd8d-0ee9-45e7-8e30-75ac30db6347}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="thirdparty\httplib">
+      <UniqueIdentifier>{bda65ece-20df-4814-bacf-66aae6412cab}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\thirdparty\lua\lapi.c">
@@ -129,14 +135,14 @@
     <ClCompile Include="..\sources\scriptapi\ScriptCore.cpp">
       <Filter>scriptapi</Filter>
     </ClCompile>
-    <ClCompile Include="..\thirdparty\hidapi\windows\hid.c">
-      <Filter>thirdparty</Filter>
-    </ClCompile>
     <ClCompile Include="..\thirdparty\lfs\lfs.c">
       <Filter>thirdparty\lfs</Filter>
     </ClCompile>
     <ClCompile Include="..\sources\AsyncHid.cpp">
       <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\hidapi\windows\hid.c">
+      <Filter>thirdparty\hidapi</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -248,9 +254,6 @@
     <ClInclude Include="..\sources\scriptapi\ConsoleAPI.hpp">
       <Filter>scriptapi</Filter>
     </ClInclude>
-    <ClInclude Include="..\thirdparty\hidapi\hidapi\hidapi.h">
-      <Filter>thirdparty</Filter>
-    </ClInclude>
     <ClInclude Include="..\thirdparty\lfs\lfs.h">
       <Filter>thirdparty\lfs</Filter>
     </ClInclude>
@@ -259,6 +262,15 @@
     </ClInclude>
     <ClInclude Include="..\sources\AsyncHid.hpp">
       <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sources\scriptapi\HttpAPI.hpp">
+      <Filter>scriptapi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\thirdparty\cpp-httplib\httplib.h">
+      <Filter>thirdparty\httplib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\thirdparty\hidapi\hidapi\hidapi.h">
+      <Filter>thirdparty\hidapi</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

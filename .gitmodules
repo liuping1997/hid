@@ -11,3 +11,6 @@
 	path = thirdparty/hidapi
 	url = https://github.com/signal11/hidapi.git
 
+[submodule "thirdparty/httplib"]
+	path = thirdparty/httplib
+	url = https://github.com/yhirose/cpp-httplib.git

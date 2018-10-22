@@ -6,6 +6,7 @@
 #include "ApplicationAPI.hpp"
 #include "ConsoleAPI.hpp"
 #include "HidAPI.hpp"
+#include "HttpAPI.hpp"
 #include "AsyncHidAPI.hpp"
 #include "UtilsAPI.hpp"
 #include "lfs.h"
@@ -80,6 +81,7 @@ namespace Lua
 	void eventLoop(double dt)
 	{
 		call("event_loop", dt);
+		http_event_loop(Lua::L);
 	}
 
 	void call(const char* func)
