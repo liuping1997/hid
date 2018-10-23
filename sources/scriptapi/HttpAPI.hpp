@@ -102,7 +102,6 @@ namespace Lua
 		{
 			HttpRequestEvent& evt = *evt_ptr;
 			lua_rawgeti(L, LUA_REGISTRYINDEX, evt.lua_callback);
-			int n = evt.req->params.size();
 			lua_pushstring(L, evt.req->method.c_str());
 			lua_pushstring(L, evt.req->path.c_str());
 			lua_newtable(L);

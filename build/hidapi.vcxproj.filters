@@ -19,6 +19,15 @@
     <Filter Include="thirdparty\hidapi">
       <UniqueIdentifier>{ba111eb8-0bbb-4c25-a74b-941f58b0ca99}</UniqueIdentifier>
     </Filter>
+    <Filter Include="scripts">
+      <UniqueIdentifier>{e87c35a3-b457-4f39-a476-bbbd8b39cd81}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="scripts\hotfix">
+      <UniqueIdentifier>{d4fa12b0-874b-451a-9606-6659ce8045a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="thirdparty\http">
+      <UniqueIdentifier>{2def96c9-b04a-47c5-887a-8bdf9742e94b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\thirdparty\lua\lapi.c">
@@ -269,10 +278,52 @@
     <ClInclude Include="..\thirdparty\hidapi\hidapi\hidapi.h">
       <Filter>thirdparty\hidapi</Filter>
     </ClInclude>
+    <ClInclude Include="..\thirdparty\httplib\httplib.h">
+      <Filter>thirdparty\http</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\sources\ReadMe.txt">
-      <Filter>core</Filter>
-    </Text>
+    <Text Include="..\sources\ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\scripts\bootstrap.lua">
+      <Filter>scripts</Filter>
+    </None>
+    <None Include="..\scripts\hid.lua">
+      <Filter>scripts</Filter>
+    </None>
+    <None Include="..\scripts\http.lua">
+      <Filter>scripts</Filter>
+    </None>
+    <None Include="..\scripts\main.lua">
+      <Filter>scripts</Filter>
+    </None>
+    <None Include="..\scripts\resful.lua">
+      <Filter>scripts</Filter>
+    </None>
+    <None Include="..\scripts\test.lua">
+      <Filter>scripts</Filter>
+    </None>
+    <None Include="..\scripts\timer.lua">
+      <Filter>scripts</Filter>
+    </None>
+    <None Include="..\scripts\hotfix\hotfix.lua">
+      <Filter>scripts\hotfix</Filter>
+    </None>
+    <None Include="..\scripts\hotfix\hotfix_impl.lua">
+      <Filter>scripts\hotfix</Filter>
+    </None>
+    <None Include="..\scripts\hotfix\hotfix_main.lua">
+      <Filter>scripts\hotfix</Filter>
+    </None>
+    <None Include="..\scripts\hotfix\module_names.lua">
+      <Filter>scripts\hotfix</Filter>
+    </None>
+    <None Include="..\scripts\hotfix\internal\functions_replacer.lua">
+      <Filter>scripts\hotfix</Filter>
+    </None>
+    <None Include="..\scripts\hotfix\internal\module_updater.lua">
+      <Filter>scripts\hotfix</Filter>
+    </None>
   </ItemGroup>
 </Project>

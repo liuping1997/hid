@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.28010.2003
+VisualStudioVersion = 15.0.28010.2041
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hiddevice", "hiddevice.vcxproj", "{28EECD3A-27D9-4831-820D-96904E140630}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hidapi", "hidapi.vcxproj", "{28EECD3A-27D9-4831-820D-96904E140630}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -26,6 +26,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {EFFD4A31-AC86-4946-A40B-66902C80A8C6}
+		SolutionGuid = {F5974EF3-FB78-46C6-A1B7-37164E532A13}
 	EndGlobalSection
 EndGlobal

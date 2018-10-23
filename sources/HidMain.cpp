@@ -20,35 +20,46 @@ using uchar = unsigned char;
 
 extern "C"
 {
-	void usb_hid_int()
+	void hidapi_int()
 	{
 		AsyncHid::Get().init();
 	}
 
-	bool usb_hid_open(ushort usVID, ushort usPID)
+	bool hidapi_open(ushort usVID, ushort usPID)
 	{
 		return AsyncHid::Get().open(usVID, usPID);
 	}
 
-	void usb_hid_close()
+	void hidapi_close()
 	{
 		AsyncHid::Get().close();
 	}
 
-	void usb_hid_write(const uchar *wbuf,int len)
+	void hidapi_write(const uchar *wbuf, int len)
 	{
 		AsyncHid::Buffer buf;
-		memcpy_s(buf.data(), buf.size(), wbuf, len);
+		buf[0] = 0;
+		memcpy_s(buf.data() + 1, buf.size() - 1, wbuf, len);
 		AsyncHid::Get().write(buf);
 	}
 
-	void usb_hid_read_all(uchar* buf, int len)
+	void hidapi_write_crc16(const uchar *wbuf,int len)
+	{
+		AsyncHid::Buffer buf;
+		buf[0] = 0;
+		memcpy_s(buf.data() + 1, buf.size() - 1, wbuf, len);
+		boost::crc_optimal<16, 0x1021, 0, 0, true, true> crc_ccitt_kermit;
+		crc_ccitt_kermit = std::for_each(wbuf, wbuf + len, crc_ccitt_kermit);
+		ushort sum = crc_ccitt_kermit.checksum();
+		buf[len + 1] = sum & 0x00FF;
+		buf[len + 2] = sum >> 8;
+		buf[buf.size() - 1] = len + 2;
+		AsyncHid::Get().write(buf);
+	}
+
+	void hidapi_read_all(uchar* buf, int len)
 	{
 		AsyncHid::Get().read(buf, len);
-	}
-	int usb_hid_read(int id, int mask)
-	{
-		return Lua::lua_hid_read_int4(id, mask);
 	}
 }
 

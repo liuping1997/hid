@@ -65,6 +65,7 @@ namespace Lua
 		AsyncHid::Buffer wbuf;
 		wbuf[0] = 0;//add packet report head
 		memcpy_s(wbuf.data() + 1, wbuf.size() - 1, data, len);
+		wbuf[wbuf.size() - 1] = len & 0xFF;
 		AsyncHid::Get().write(wbuf);
 		return 0;
 	}
