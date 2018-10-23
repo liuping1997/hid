@@ -57,7 +57,7 @@ extern "C"
 		AsyncHid::Get().write(buf);
 	}
 
-	void hidapi_read_all(uchar* buf, int len)
+	void hidapi_read(uchar* buf, int len)
 	{
 		AsyncHid::Get().read(buf, len);
 	}
@@ -66,25 +66,6 @@ extern "C"
 #ifdef _CONSOLE
 int main (int argc, char **argv) 
 {
-	// This is "123456789" in ASCII
-	unsigned char const data[] = { 0, 0, 2, 0, 2, 0, 0xb5 };
-	std::size_t const data_len = sizeof(data) / sizeof(data[0]);
-
-	// The expected CRC for the given data
-
-	boost::uint16_t const expected = 0x1641;
-
-	// Simulate CRC-CCITT
-	boost::crc_basic<16> crc_ccitt22(0x1021, 0x0000, 0, true, true);
-	crc_ccitt22.process_bytes(data, data_len);
-	spdlog::info("{0:x}",crc_ccitt22.checksum());
-
-	// Repeat with the optimal version (assuming a 16-bit type exists)
-
-	boost::crc_optimal<16, 0x1021, 0, 0, true, true> crc_ccitt2;
-	crc_ccitt2 = std::for_each(data, data + data_len, crc_ccitt2);
-	spdlog::info("{0:x}",crc_ccitt2.checksum());
-	
 	fs::path apppath = argv[0];
 	fs::current_path(apppath.remove_filename());
 	spdlog::info("current apppath:{0}", fs::current_path().generic_string());
@@ -153,6 +134,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
+		spdlog::info("current apppath:{0}", fs::current_path().generic_string());
 		app.reset(&Application::instance());
 		app->initialize();
 		break;
@@ -160,6 +142,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	case DLL_THREAD_DETACH:
 		break;
 	case DLL_PROCESS_DETACH:
+		Application::close();
 		break;
 	}
 	return TRUE;

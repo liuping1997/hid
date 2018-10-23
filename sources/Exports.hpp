@@ -12,5 +12,5 @@ extern "C"
 	HIDSDK_API void hidapi_close();
 	HIDSDK_API void hidapi_write(const unsigned char *buf, int len);
 	HIDSDK_API void hidapi_write_crc16(const unsigned char *buf, int len);
-	HIDSDK_API void hidapi_read_all(unsigned char* buf, int len);
+	HIDSDK_API void hidapi_read(unsigned char* buf, int len);
 }
