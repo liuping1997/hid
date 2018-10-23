@@ -513,7 +513,7 @@ end
 
 function test_func()
 	--[[
-	local data = utils.crc16_kermit(string.char(0,0,2,0,2,0,0xb5),5)
+	local data = utils.crc16_kermit(string.char(0,0,2,0,2,0,0xb5))
 	local h,l = string.byte(data,1,2)
 	print(string.format("%x%x",h,l))
 	]]
