@@ -7,7 +7,7 @@ local http = require("http")
 
 local M = {}
 -- 读缓冲区
-local rbuf = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+local rbuf = {}
 local validhid = false
 -- 设备状态
 local status = {on = "开", off = "关", lay = "放置", leave = "取走", checked = "选中", unchecked = "未选"}
@@ -71,6 +71,9 @@ function M.init()
 	console.set_buffer_size(120, 20)
 	http.init("0.0.0.0", 8011)
 	M.restful()
+	for i = 1, 64 do
+		rbuf[i] = i
+	end
 	--hid.init()
 end
 
@@ -220,7 +223,7 @@ function M.read_hid()
 		return
 	end
 
-	local len = 0x26
+	local len = 0x2d
 	local buf = hid.read(len)
 	-- shift array + 1
 	rbuf[01],
@@ -264,7 +267,10 @@ function M.read_hid()
 		rbuf[39],
 		rbuf[40],
 		rbuf[41],
-		rbuf[42] = string.byte(buf, 1, len)
+		rbuf[42],
+		rbuf[43],
+		rbuf[44],
+		rbuf[45] = string.byte(buf, 1, len)
 end
 
 function M.restful()
