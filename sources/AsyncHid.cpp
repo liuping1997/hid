@@ -1,5 +1,6 @@
 #include "AsyncHid.hpp"
 #include "Logger.hpp"
+#include "hidapi.h"
 #include <iostream>
 #include <thread>
 #include <chrono>
@@ -7,7 +8,7 @@
 #include <algorithm>
 #include <Windows.h>
 #include <codecvt>
-#include "hidapi.h"
+#include <boost/crc.hpp>
 
 using namespace std::chrono;
 #pragma warning(disable:4996)
@@ -169,6 +170,17 @@ bool AsyncHid::fetch()
 	else if (res < 0)
 		spdlog::error("Unable to read()");
 
+	// crc16
+	boost::crc_optimal<16, 0x1021, 0, 0, true, true> crc_ccitt_kermit;
+	crc_ccitt_kermit = std::for_each(buf, buf + res - 2, crc_ccitt_kermit);
+	ushort sum = crc_ccitt_kermit.checksum();
+	auto low = buf[res - 1 - 1];
+	auto high = buf[res - 1 - 2];
+	ushort received_sum = (high<< 8) + low;
+	if (received_sum != sum)
+	{
+		spdlog::warn("read hid checksum failure.{} != {}", received_sum, sum);
+	}
 	return res > 0;
 }
 

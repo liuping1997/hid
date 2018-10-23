@@ -77,7 +77,7 @@ function M.check()
 end  -- check()
 
 function M.init()
-    hotfix_impl.log_debug = function(s) print(s) end
+    --hotfix_impl.log_debug = function(s) print(s) end
     hotfix_impl.add_protect(global_objects)
 end
 
