@@ -23,7 +23,9 @@ namespace Lua
 			IBM           8005         0000            yes              yes            no
 		*/
 		size_t len = 0;
-		auto data = reinterpret_cast<const uchar*>(lua_tolstring(L,-1, &len));
+		auto data = reinterpret_cast<const uchar*>(lua_tolstring(L,-2, &len));
+		auto len2 = static_cast<size_t>(lua_tointeger(L,-1));
+		len = std::clamp(len2, size_t(0), len);
 		boost::crc_optimal<16, 0x1021, 0, 0, true, true> crc_ccitt_kermit;
 		crc_ccitt_kermit = std::for_each(data, data + len, crc_ccitt_kermit);
 

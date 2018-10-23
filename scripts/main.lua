@@ -166,6 +166,7 @@ end
 
 function M.write_hid(name, id, data1, data2, data3)
 	if validhid == false then
+		print("write hid failure.hid not opened.")
 		return
 	end
 
@@ -177,20 +178,41 @@ function M.write_hid(name, id, data1, data2, data3)
 	local len = device.len
 	local type = device.type
 	local d = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-	d[1] = device.cmd
-	d[2] = id
+	d[1] = 0
+	d[2] = 0
+	d[3] = 2
+	d[4] = 0
+	d[5] = len
+	d[6] = 0
+	d[7] = device.cmd
+	d[8] = id
 	if type == "byte" then
-		d[3] = data1 & 0xf
-		d[4] = data2 & 0xf
-		d[5] = data3 & 0xf
+		if data1 ~= nil then
+			d[9] = data1 & 0xf
+		end
+		if data2 ~= nil then
+			d[10] = data2 & 0xf
+		end
+		if data3 ~= nil then
+			d[11] = data3 & 0xf
+		end
 	else
-		d[3], d[4] = parse_short(data1)
-		d[5], d[6] = parse_short(data2)
-		d[7], d[8] = parse_short(data3)
+		if data1 ~= nil then
+			d[9], d[10] = parse_short(data1)
+		end
+		if data2 ~= nil then
+			d[11], d[12] = parse_short(data2)
+		end
+		if data3 ~= nil then
+			d[13], d[14] = parse_short(data3)
+		end
 	end
-	--print(name, type, data1, data2, data3, d[1], d[2], d[3], d[4])
-	device.data = string.char(d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10])
-	return hid.write(device.data)
+	print(name, type, data1, data2, data3, d[1], d[2], d[3], d[4])
+	local crc = utils.crc16_kermit(string.char(d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10], d[11], d[12], d[13], d[14], d[15]), len + 5)
+	d[len + 5 + 1], d[len + 5 + 2] = string.byte(crc, 1, 2)
+	print(string.format("crc:%x%x", h, l))
+	print(string.format("%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x", d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10], d[11], d[12], d[13], d[14], d[15]))
+	return hid.write(string.char(d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10], d[11], d[12], d[13], d[14], d[15]))
 end
 
 function M.read_hid()
@@ -245,31 +267,132 @@ function M.read_hid()
 		rbuf[42] = string.byte(buf, 1, len)
 end
 
-
 function M.restful()
-	http.get("/hid/open",function(params)
-		return (M.open_hid() and "true") or "false"
-	end)
-	http.get("/hid/close",function(params)
-		M.close_hid()
-		return "true"
-	end)
-	http.get("/hid/read",function(params)
-		M.read_hid()
-		return string.char("32","0x4","03")
-	end)
-	http.get("/hid/write",function(params)
-		M.write_hid()
-		return "true"
-	end)
+	http.get(
+		"/hid/open",
+		function(params)
+			return (M.open_hid() and "true") or "false"
+		end
+	)
+	http.get(
+		"/hid/close",
+		function(params)
+			M.close_hid()
+			return "true"
+		end
+	)
+	http.get(
+		"/hid/read",
+		function(params)
+			local id = tonumber(params["id"])
+			local bits = tonumber(params["bits"])
+			if bits == 1 then
+				return string.format("0x%02x", rbuf[id + 1])
+			elseif bits == 2 then
+				return string.format("0x%02x%02x", rbuf[id + 1], rbuf[id + 2])
+			elseif bits == 4 then
+				return string.format("0x%02x%02x%02x%02x", rbuf[id + 1], rbuf[id + 2], rbuf[id + 3], rbuf[id + 4])
+			else
+				local str = "error bits"
+				print(str)
+				return str
+			end
+		end
+	)
+	http.get(
+		"/hid/readall",
+		function(params)
+			local fmt = string.rep("%02x", 45, "")
+			local ret =
+				string.format(
+				fmt,
+				rbuf[1],
+				rbuf[2],
+				rbuf[3],
+				rbuf[4],
+				rbuf[5],
+				rbuf[6],
+				rbuf[7],
+				rbuf[8],
+				rbuf[9],
+				rbuf[10],
+				rbuf[11],
+				rbuf[12],
+				rbuf[13],
+				rbuf[14],
+				rbuf[15],
+				rbuf[16],
+				rbuf[17],
+				rbuf[18],
+				rbuf[19],
+				rbuf[20],
+				rbuf[21],
+				rbuf[22],
+				rbuf[23],
+				rbuf[24],
+				rbuf[25],
+				rbuf[26],
+				rbuf[27],
+				rbuf[28],
+				rbuf[29],
+				rbuf[30],
+				rbuf[31],
+				rbuf[32],
+				rbuf[33],
+				rbuf[34],
+				rbuf[35],
+				rbuf[36],
+				rbuf[37],
+				rbuf[38],
+				rbuf[39],
+				rbuf[40],
+				rbuf[41],
+				rbuf[42],
+				rbuf[43],
+				rbuf[44],
+				rbuf[45]
+			)
+			return ret
+		end
+	)
+	http.get(
+		"/hid/writeraw",
+		function(params)
+			local str = params["data"]
+			local d = {}
+			local len = math.floor(str:len(str) / 2)
+			for i = 1, len do
+				d[i] = math.floor(tonumber(str:sub(i * 2 - 1, i * 2), 16))
+			end
+			for i = 1, 16 do
+				if d[i] == nil then
+					d[i] = 0
+				end
+			end
+			hid.write(string.char(d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10], d[11], d[12], d[13], d[14], d[15], d[16]))
+			return "true"
+		end
+	)
+	http.get(
+		"/hid/write",
+		function(params)
+			local cmd = params["name"]
+			local mask = tonumber(params["mask"], 16)
+			local data1 = tonumber(params["data1"])
+			local data2 = tonumber(params["data2"])
+			local data3 = tonumber(params["data3"])
+			M.write_hid(cmd, mask, data1, data2, data3)
+			return "true"
+		end
+	)
 end
 
-function M.hid_read_by_id(id,mask)
+function M.hid_read_by_id(id, mask)
 	return rbuf[id] & mask
 end
 
-function hid_read_by_id(id,mask)
-	return M.hid_read_by_id(id+1,mask)
+function hid_read_by_id(id, mask)
+	return M.hid_read_by_id(id + 1, mask)
 end
 
 local function test_read_hid()

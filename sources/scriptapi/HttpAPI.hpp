@@ -124,6 +124,10 @@ namespace Lua
 			{
 				evt.context = luaL_checkstring(L, -1);
 			}
+			else if (lua_type(L, -1) == LUA_TNUMBER)
+			{
+				evt.context = std::to_string(luaL_checknumber(L, -1));
+			}
 			else
 			{
 				evt.context = "return error";

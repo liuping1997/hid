@@ -73,6 +73,7 @@
     <ClInclude Include="..\sources\scriptapi\HidAPI.hpp" />
     <ClInclude Include="..\sources\scriptapi\HttpAPI.hpp" />
     <ClInclude Include="..\sources\scriptapi\ScriptCore.hpp" />
+    <ClInclude Include="..\sources\scriptapi\UtilsAPI.hpp" />
     <ClInclude Include="..\thirdparty\cpp-httplib\httplib.h" />
     <ClInclude Include="..\thirdparty\hidapi\hidapi\hidapi.h" />
     <ClInclude Include="..\thirdparty\lfs\lfs.h" />
@@ -103,6 +104,19 @@
     <ClInclude Include="..\thirdparty\lua\lundump.h" />
     <ClInclude Include="..\thirdparty\lua\lvm.h" />
     <ClInclude Include="..\thirdparty\lua\lzio.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\scripts\bootstrap.lua" />
+    <None Include="..\scripts\hid.lua" />
+    <None Include="..\scripts\hotfix\hotfix.lua" />
+    <None Include="..\scripts\hotfix\hotfix_impl.lua" />
+    <None Include="..\scripts\hotfix\hotfix_main.lua" />
+    <None Include="..\scripts\hotfix\internal\functions_replacer.lua" />
+    <None Include="..\scripts\hotfix\internal\module_updater.lua" />
+    <None Include="..\scripts\hotfix\module_names.lua" />
+    <None Include="..\scripts\http.lua" />
+    <None Include="..\scripts\main.lua" />
+    <None Include="..\scripts\timer.lua" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{28EECD3A-27D9-4831-820D-96904E140630}</ProjectGuid>

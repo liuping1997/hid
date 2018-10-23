@@ -22,6 +22,12 @@
     <Filter Include="thirdparty\httplib">
       <UniqueIdentifier>{bda65ece-20df-4814-bacf-66aae6412cab}</UniqueIdentifier>
     </Filter>
+    <Filter Include="scirpts">
+      <UniqueIdentifier>{3f0308fc-8a3e-4c4e-9562-e4fdffd134fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="scirpts\hotfix">
+      <UniqueIdentifier>{1399aac0-8d86-48b0-8344-b2b0766959c2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\thirdparty\lua\lapi.c">
@@ -272,5 +278,43 @@
     <ClInclude Include="..\thirdparty\hidapi\hidapi\hidapi.h">
       <Filter>thirdparty\hidapi</Filter>
     </ClInclude>
+    <ClInclude Include="..\sources\scriptapi\UtilsAPI.hpp">
+      <Filter>scriptapi</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\scripts\bootstrap.lua">
+      <Filter>scirpts</Filter>
+    </None>
+    <None Include="..\scripts\hid.lua">
+      <Filter>scirpts</Filter>
+    </None>
+    <None Include="..\scripts\main.lua">
+      <Filter>scirpts</Filter>
+    </None>
+    <None Include="..\scripts\timer.lua">
+      <Filter>scirpts</Filter>
+    </None>
+    <None Include="..\scripts\hotfix\hotfix.lua">
+      <Filter>scirpts\hotfix</Filter>
+    </None>
+    <None Include="..\scripts\hotfix\hotfix_impl.lua">
+      <Filter>scirpts\hotfix</Filter>
+    </None>
+    <None Include="..\scripts\hotfix\hotfix_main.lua">
+      <Filter>scirpts\hotfix</Filter>
+    </None>
+    <None Include="..\scripts\hotfix\module_names.lua">
+      <Filter>scirpts\hotfix</Filter>
+    </None>
+    <None Include="..\scripts\hotfix\internal\functions_replacer.lua">
+      <Filter>scirpts\hotfix</Filter>
+    </None>
+    <None Include="..\scripts\hotfix\internal\module_updater.lua">
+      <Filter>scirpts\hotfix</Filter>
+    </None>
+    <None Include="..\scripts\http.lua">
+      <Filter>scirpts</Filter>
+    </None>
   </ItemGroup>
 </Project>
