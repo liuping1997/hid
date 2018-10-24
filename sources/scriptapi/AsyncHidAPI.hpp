@@ -63,6 +63,7 @@ namespace Lua
 		auto data = reinterpret_cast<const unsigned char*>(lua_tolstring(L,-2, &len));
 		AsyncHid::Buffer wbuf;
 		wbuf[0] = 0;//add packet report head
+		len = std::clamp(len, size_t(0), wbuf.size() - 1);
 		memcpy_s(wbuf.data() + 1, wbuf.size() - 1, data, len);
 		wbuf[wbuf.size() - 1] = len & 0xFF;
 		AsyncHid::Get().write(wbuf);

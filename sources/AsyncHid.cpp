@@ -123,7 +123,9 @@ void AsyncHid::read(uchar* buf, int len)
 		return;
 	}
 	std::lock_guard<std::mutex> guard(mMutex);
-	memcpy_s(buf, len, mReadBuf.data(), mReadBuf.size());
+	if (len > mReadBuf.size())
+		len = (int)mReadBuf.size();
+	memcpy_s(buf, len, mReadBuf.data(), len);
 }
 
 void AsyncHid::read(ReadBuffer& buf)

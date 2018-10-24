@@ -128,6 +128,7 @@ function M.read()
   local buf = hid.read(len)
   -- shift array + 1
   rbuf[01],
+  rbuf[01],
     rbuf[02],
     rbuf[03],
     rbuf[04],
@@ -236,8 +237,9 @@ function M.showinfo()
   console.print(x, 06, string.format("%s:%s %s", "棉  棒:", is_checked(b[18]), is_leaved(b[18])))
   console.print(x, 07, string.format("%s:%s %s", "输液贴:", is_checked(b[20]), is_leaved(b[20])))
   console.print(x, 08, string.format("%s:%s %s %d", "采血针:", is_checked(b[22]), is_leaved(b[22]), to_short(b[23], b[24])))
-  console.print(x, 09, string.format("%s:%s 5ml(%s) 2ml(%s)", "采血管:", is_checked(b[26]), is_h_on(b[27]), is_l_on(b[27])))
-  console.print(x, 10, string.format("%s:%s %s %d %d", "药  瓶:", is_checked(b[16]), is_leaved(b[16]), to_short(b[33], b[34]), to_byte(b[35])))
+  console.print(x, 09, string.format("%s:%s 5ml(%s) 2ml(%s)", "采血管:", is_checked(b[26]), is_leaved(b[26]),is_h_on(b[27]), is_l_on(b[27])))
+  console.print(x, 10, string.format("%s:%s %s", "药  瓶:", is_checked(b[29]), is_leaved(b[29]), is_on(b[30])))
+  console.print(x, 10, string.format("%s:%s %s %d %d", "输液器:", is_checked(b[32]), is_leaved(b[32]), to_short(b[33], b[34]), to_byte(b[35])))
   console.print(x, 11, string.format("%s:%s %s %d %d %d", "注射器:", is_checked(b[37]), is_leaved(b[37]), to_short(b[38], b[39]), to_byte(b[40]), to_byte(b[41])))
 end
 
