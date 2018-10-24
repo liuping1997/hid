@@ -2,6 +2,9 @@ local M = {}
 local hidapi = require("async_hidapi")
 local ins = nil
 local id = 0
+
+M.success = false
+
 local adapter_command = {
   address_list = 0x01,
   data = 0x02
@@ -16,14 +19,16 @@ function M.open()
   if ins == nil then
     print("open hid failure")
   end
-  return ins ~= nil
+  M.success = ins ~= nil
+  return M.success
 end
 
 function M.close()
   if ins ~= true then
-    ins.close()
+    hidapi.close()
   end
   ins = nil
+  M.success = false
 end
 
 function M.next_packet_id()
@@ -90,8 +95,8 @@ function test_read_hid()
     return
   end
   print("test read hid")
-  ins.write(string.char(00, 00, 02, 00, 02, 00, 0xb5, 0x41, 0x16))
-  local rx = ins.read(65)
+  hidapi.write(string.char(00, 00, 02, 00, 02, 00, 0xb5, 0x41, 0x16), 9)
+  local rx = hidapi.read(65)
   if rx and #rx > 1 then
     handle_received_message_or_something(rx)
     for i = 1, #rx do

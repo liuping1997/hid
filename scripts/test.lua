@@ -1,79 +1,23 @@
-local app = require("app")
-local console = require("console")
-local timer = require("timer")
-local hid = require("hid")
-local utils = require("utils")
-local http = require("http")
-
 local M = {}
+local timer = require("timer")
 -- 读缓冲区
 local rbuf = {}
-local validhid = false
--- 设备状态
-local status = {on = "开", off = "关", lay = "放置", leave = "取走", checked = "选中", unchecked = "未选"}
-local devices = {
-	motor = {
-		cmd = 0xAA,
-		len = 0x09,
-		type = "short",
-		data = "0",
-		tween = {}
-	},
-	led = {
-		cmd = 0xAB,
-		len = 0x03,
-		type = "byte",
-		data = "0",
-		tween = {}
-	},
-	marquee = {
-		cmd = 0xAC,
-		len = 0x05,
-		type = "byte",
-		data = "0",
-		tween = {}
-	}
-}
+local hid = nil
+local motor_power = {state = false}
+local led_power = {state = false}
+local marquee_power = {state = false}
 
-function M.init()
-	print("lua init")
+function M.init(_hid)
+	hid = _hid
 end
 
 function M.event_loop(dt)
 	timer.update(dt)
 end
 
-local function to_byte(d)
-	if d == nil then
-		return 0
-	end
-	return d
-end
-
-local function parse_short(d)
-	if d == nil then
-		return 0
-	end
-	d = d & 0xffff
-	return d >> 8, d & 0xff
-end
-
-function M.hid_read_by_id(id, mask)
-	return rbuf[id] & mask
-end
-
 local function test_read_hid()
-	M.read_hid()
-	print(string.format("head:%d %d %d %d %d %d %d", rbuf[1], rbuf[2], rbuf[3], rbuf[4], rbuf[5], rbuf[6], rbuf[7]))
-	print(string.format("body:%d %d %d %d %d %d %d %d", rbuf[8], rbuf[9], rbuf[10], rbuf[11], rbuf[12], rbuf[13], rbuf[14], rbuf[15]))
-	print(string.format("body:%d %d %d %d %d %d %d %d", rbuf[16], rbuf[17], rbuf[18], rbuf[19], rbuf[20], rbuf[21], rbuf[22], rbuf[23]))
-	print(string.format("body:%d %d %d %d %d %d %d %d", rbuf[24], rbuf[25], rbuf[26], rbuf[27], rbuf[28], rbuf[29], rbuf[30], rbuf[31]))
-	print(string.format("body:%d %d %d %d %d %d %d", rbuf[32], rbuf[33], rbuf[34], rbuf[35], rbuf[36], rbuf[37], 0))
+	hid.showdata()
 end
-
-local motor_power = {state = false}
-local led_power = {state = false}
-local marquee_power = {state = false}
 
 function test_write_hid()
 	-- 防止重入
@@ -88,7 +32,7 @@ function test_write_hid()
 		timer.every(
 		0.1,
 		function()
-			M.write_hid("motor", 0x7, motor_power.a, motor_power.b, motor_power.c)
+			hid.write("motor", 0x7, motor_power.a, motor_power.b, motor_power.c)
 			print("motor power:", motor_power.a, motor_power.b, motor_power.c)
 		end,
 		50
@@ -119,7 +63,7 @@ function test_write_hid()
 		function()
 			local a = math.ceil(led_power.a)
 			local data = (a << 1) + led_power.b
-			M.write_hid("led", 0x7, data, 0, 0)
+			hid.write("led", 0x7, data, 0, 0)
 			print("led power:", led_power.a, led_power.b, data)
 		end,
 		50
@@ -148,7 +92,7 @@ function test_write_hid()
 		timer.every(
 		0.1,
 		function()
-			M.write_hid("marquee", 0x3, marquee_power.a, marquee_power.b, 0)
+			hid.write("marquee", 0x3, marquee_power.a, marquee_power.b, 0)
 			--print("marquee power:", marquee_power.a, marquee_power.b, 0)
 		end,
 		50

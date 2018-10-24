@@ -108,6 +108,7 @@
   <ItemGroup>
     <None Include="..\scripts\bootstrap.lua" />
     <None Include="..\scripts\hid.lua" />
+    <None Include="..\scripts\hid001.lua" />
     <None Include="..\scripts\hotfix\hotfix.lua" />
     <None Include="..\scripts\hotfix\hotfix_impl.lua" />
     <None Include="..\scripts\hotfix\hotfix_main.lua" />
@@ -116,6 +117,7 @@
     <None Include="..\scripts\hotfix\module_names.lua" />
     <None Include="..\scripts\http.lua" />
     <None Include="..\scripts\main.lua" />
+    <None Include="..\scripts\restful.lua" />
     <None Include="..\scripts\timer.lua" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

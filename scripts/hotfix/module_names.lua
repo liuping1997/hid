@@ -6,6 +6,8 @@ local hotfix_module_names = {
   "main",
   "hid",
   "http",
+  "restful",
+  "hid001"
 }
 
 return hotfix_module_names

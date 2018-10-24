@@ -14,16 +14,4 @@ function event_loop(dt)
     hotfix.event_loop(dt)
 end
 
-function open_hid()
-    main.open_hid()
-end
-
-function close_hid()
-    main.close_hid()
-end
-
-function print_hid()
-    main.print_hid()
-end
-
 return M
