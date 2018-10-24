@@ -32,11 +32,18 @@ public:
 	{
 		// logger
 		std::filesystem::create_directory("./logs/");
-		spdlog::set_level(spdlog::level::info); // Set global log level to info
-		auto logger = spdlog::rotating_logger_mt("hid", "./logs/hid.log", 1048576 * 5, 3);
-		spdlog::set_default_logger(logger);
-		spdlog::flush_every(std::chrono::seconds(3));
-	
+
+		try
+		{
+			//spdlog::set_level(spdlog::level::info); // Set global log level to info
+			//auto logger = spdlog::rotating_logger_mt("hid", "./logs/hid.log", 1048576 * 5, 3);
+			//spdlog::set_default_logger(logger);
+			//spdlog::flush_every(std::chrono::seconds(3));
+		}
+		catch (const spdlog::spdlog_ex &ex)
+		{
+			std::printf("Log initialization failed: %s\n", ex.what());
+		}
 		Lua::initialize();
 	}
 	static void close()

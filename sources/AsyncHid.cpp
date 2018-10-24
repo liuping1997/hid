@@ -14,7 +14,9 @@ using namespace std::chrono;
 #pragma warning(disable:4996)
 
 AsyncHid::AsyncHid(void)
+	:mRunning(false)
 {
+	mWorkerThread = std::make_shared<std::thread>(&AsyncHid::update, this);
 }
 
 void AsyncHid::init()
@@ -25,17 +27,7 @@ void AsyncHid::init()
 
 bool AsyncHid::open(ushort usVID, ushort usPID)
 {
-	if (mWorkerThread != nullptr)
-	{
-		if (mRunning && mWorkerThread->joinable())
-		{
-			mRunning = false;
-			mWorkerThread->join();
-		}
-	}
-	mRunning = true;
-	mWorkerThread = std::make_shared<std::thread>(&AsyncHid::update, this);
-
+	mRunning = false;
 	struct hid_device_info *devs, *cur_dev;
 	devs = hid_enumerate(0x0, 0x0);
 	cur_dev = devs;
@@ -54,9 +46,11 @@ bool AsyncHid::open(ushort usVID, ushort usPID)
 	mHandle = hid_open(usVID, usPID, NULL) ;
 	mOpened = mHandle > 0;
 	if (!mHandle) {
-		spdlog::error("unable to open device");
+		printf("unable to open device\n");
 		return false;
 	}
+	mRunning = true;
+
 	// Read the Manufacturer String
 	int res = 0;
 #define MAX_STR 255
@@ -78,11 +72,7 @@ void AsyncHid::close()
 {
 	try
 	{
-		if (mRunning &&mWorkerThread != nullptr)
-		{
-			mRunning = false;
-			mWorkerThread->join();
-		}
+		mRunning = false;
 		std::lock_guard<std::mutex> guard(mMutex);
 		hid_close(mHandle);
 		//hid_exit();
@@ -150,8 +140,6 @@ void AsyncHid::read(ReadBuffer& buf)
 void AsyncHid::quit()
 {
 	mRunning = false;
-	if (mWorkerThread != nullptr && mWorkerThread->joinable())
-		mWorkerThread->join();
 }
 
 bool AsyncHid::fetch()
@@ -166,20 +154,22 @@ bool AsyncHid::fetch()
 	auto buf = mReadBuf.data();
 	int res = hid_read_timeout(mHandle, buf, 65, 2000);
 	if (res == 0)
-		spdlog::info("waiting...");
+		printf("waiting...\n");
 	else if (res < 0)
-		spdlog::error("Unable to read()");
+		printf("Unable to read()\n");
 
 	// crc16
+	int len = mReadBuf[4];
 	boost::crc_optimal<16, 0x1021, 0, 0, true, true> crc_ccitt_kermit;
-	crc_ccitt_kermit = std::for_each(buf, buf + res - 2, crc_ccitt_kermit);
+	crc_ccitt_kermit = std::for_each(buf, buf + len + 5, crc_ccitt_kermit);
 	ushort sum = crc_ccitt_kermit.checksum();
-	auto low = buf[res - 1 - 1];
-	auto high = buf[res - 1 - 2];
+	auto high = buf[len + 5 ];
+	auto low = buf[len + 5 + 1];
 	ushort received_sum = (high<< 8) + low;
 	if (received_sum != sum)
 	{
-		spdlog::warn("read hid checksum failure.{} != {}", received_sum, sum);
+		printf("read hid checksum failure.%d != %d\n", received_sum, sum);
+		printf("%d %d %d\n", low, high, len);
 	}
 	return res > 0;
 }
@@ -206,17 +196,17 @@ bool AsyncHid::notifyForRead()
 void AsyncHid::update()
 {
 	// µÈ´ý»½ÐÑ
-	while (!mRunning)
+	while (true)
 	{
-		std::this_thread::sleep_for(std::chrono::milliseconds(50));
-	}
+		while (!mRunning)
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(50));
+		}
 
-	while (mRunning)
-	{
-		auto start = system_clock::now(); 
+		auto start = system_clock::now();
 		fetch();
 		flush();
-		auto end = system_clock::now(); 
+		auto end = system_clock::now();
 		auto duration = duration_cast<milliseconds>(end - start);
 		auto value = static_cast<long long>(std::max(0.0f, (1000.0f / mLimtedHZ) - duration.count()));
 		std::this_thread::sleep_for(std::chrono::milliseconds(value));

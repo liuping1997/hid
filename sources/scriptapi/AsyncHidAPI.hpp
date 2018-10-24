@@ -51,10 +51,9 @@ namespace Lua
 	static int async_read_hid(lua_State *L)
 	{
 		auto len = static_cast<int>(lua_tointeger(L, -1));
-		AsyncHid::ReadBuffer rbuf;
-		AsyncHid::Get().read(rbuf);
-		const char* buf = reinterpret_cast<const char*>(rbuf.data());
-		lua_pushlstring(L, buf, len);
+		unsigned char *rbuf = static_cast<unsigned char *>(lua_newuserdata(L, len));
+		AsyncHid::Get().read(rbuf, len);
+		lua_pushlstring(L, (char*)rbuf, len);
 		return 1;
 	}
 

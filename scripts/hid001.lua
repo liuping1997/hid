@@ -73,7 +73,7 @@ function M.write(name, id, data1, data2, data3)
   local device = devices[name]
   local len = device.len
   local type = device.type
-  local d = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+  local d = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
   d[1] = 0
   d[2] = 0
   d[3] = 2
@@ -106,17 +106,17 @@ function M.write(name, id, data1, data2, data3)
   print(name, type, data1, data2, data3, d[1], d[2], d[3], d[4])
   local crc = utils.crc16_kermit(string.char(d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10], d[11], d[12], d[13], d[14], d[15]), len + 5)
   d[len + 5 + 1], d[len + 5 + 2] = string.byte(crc, 1, 2)
-  print(string.format("crc:%x%x", h, l))
-  print(string.format("%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x", d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10], d[11], d[12], d[13], d[14], d[15]))
+  print(string.format("crc:%x%x", d[len + 5 + 1], d[len + 5 + 2]))
+  print(string.format("%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x", d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10], d[11], d[12], d[13], d[14], d[15]))
   return hid.write(string.char(d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10], d[11], d[12], d[13], d[14], d[15]))
 end
 
 function M.open()
-	hid.open()
+  hid.open()
 end
 
 function M.close()
-	hid.close()
+  hid.close()
 end
 
 function M.read()
