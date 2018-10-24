@@ -35,7 +35,7 @@ public:
 		spdlog::set_level(spdlog::level::info); // Set global log level to info
 		auto logger = spdlog::rotating_logger_mt("hid", "./logs/hid.log", 1048576 * 5, 3);
 		spdlog::set_default_logger(logger);
-		spdlog::flush_every(std::chrono::seconds(1));
+		spdlog::flush_every(std::chrono::seconds(3));
 	
 		Lua::initialize();
 	}

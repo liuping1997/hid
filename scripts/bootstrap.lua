@@ -1,4 +1,4 @@
-package.path = "../../scripts/?.lua;./scripts/?.lua;./?.lua;../../scripts/hotfix/?.lua;./scripts/hotfix/?.lua;" .. package.path
+package.path = "../../scripts/?.lua;../scripts/?.lua;../scripts/hotfix/?.lua;./scripts/?.lua;./?.lua;../../scripts/hotfix/?.lua;./scripts/hotfix/?.lua;" .. package.path
 
 local M = {}
 local main = require("main")
