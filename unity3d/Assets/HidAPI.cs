@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.Networking;
 
 public class HidAPI : MonoBehaviour {
 
-    public bool use_http = true;
+    public bool use_http = false;
     public bool opened = false;
     public byte[] read_buf = new byte[64];
     public byte[] write_buf = new byte[64];
@@ -29,7 +30,7 @@ public class HidAPI : MonoBehaviour {
         public int cmd;
         public string name;
         public string type;
-        publci WritePacket(int len,int cmd,string name,string type)
+        public WritePacket(int len,int cmd,string name,string type)
         {
             this.len = len;
             this.cmd = cmd;
@@ -38,7 +39,7 @@ public class HidAPI : MonoBehaviour {
         }
     };
 
-    static Dictionary<string,WritePacket> devinfo;
+    Dictionary<string,WritePacket> devinfo = new Dictionary<string, WritePacket>();
 
     void Start()
     {
@@ -125,7 +126,7 @@ public class HidAPI : MonoBehaviour {
     {
         if (use_http)
         {
-            get("/hid/open", (string rev)=>
+            get("/hid/open", (string rev,byte[] rev_bytes)=>
             {
                 opened = rev == "true";
                 Debug.Log(opened ? "hid open success" : "hid open failure");
@@ -141,7 +142,7 @@ public class HidAPI : MonoBehaviour {
     {
         if (use_http)
         {
-            get("/hid/close", (string rev) =>
+            get("/hid/close", (string rev,byte[] rev_bytes) =>
             {
                 Debug.Log(rev == "true" ? "hid close success" : "hid close failure");
             });
@@ -154,7 +155,7 @@ public class HidAPI : MonoBehaviour {
     }
 
 
-    public void read(Action<string> callback=null)
+    public void read(Action<string,byte[]> callback=null)
     {
         if (use_http)
         {
@@ -166,7 +167,7 @@ public class HidAPI : MonoBehaviour {
         }
         else
         {
-            hidapi_read(read_buf, 64);
+            hidapi_read(ref read_buf, 64);
             callback("", read_buf);
         }
     }
@@ -176,7 +177,7 @@ public class HidAPI : MonoBehaviour {
         if (use_http)
         {
             string route = string.Format("/hid/write?name={0}&mask={1}&data1={2}&data1={3}&data1={4}", name, mask,data1,data2,data3);
-            get(route, (string rev) =>
+            get(route, (string rev,byte[] rev_bytes) =>
             {
                 Debug.Log("write end");
             });
@@ -187,33 +188,33 @@ public class HidAPI : MonoBehaviour {
             write_buf[1] = 0;
             write_buf[2] = 2;
             write_buf[3] = 0;
-            write_buf[4] = devinfo[name].len;
+            write_buf[4] = (byte)(devinfo[name].len);
             write_buf[5] = 0;
-            write_buf[6] = devinfo[name].cmd;
+            write_buf[6] = (byte)(devinfo[name].cmd);
 
             if (devinfo[name].type == "byte")
             {
-                write_buf[7] = data1 & 0xFF;
-                write_buf[8] = data2 & 0xFF;
-                write_buf[9] = data3 & 0xFF;
+                write_buf[7] = (byte)(data1 & 0xFF);
+                write_buf[8] = (byte)(data2 & 0xFF);
+                write_buf[9] =(byte)(data3 & 0xFF);
             }
             else if (devinfo[name].type == "short")
             {
-                write_buf[07] = data1 & 0x00FF; write_buf[08] = (data1 & 0xFF00) >> 8;
-                write_buf[09] = data2 & 0x00FF; write_buf[10] = (data2 & 0xFF00) >> 8;
-                write_buf[11] = data3 & 0x00FF; write_buf[12] = (data3 & 0xFF00) >> 8;
+                write_buf[07] =(byte)(data1 & 0x00FF); write_buf[08] = (byte)((data1 & 0xFF00) >> 8);
+                write_buf[09] = (byte)(data2 & 0x00FF); write_buf[10] = (byte)((data2 & 0xFF00) >> 8);
+                write_buf[11] =(byte) (data3 & 0x00FF); write_buf[12] = (byte)((data3 & 0xFF00) >> 8);
             }
 
             hidapi_write_crc16(write_buf, devinfo[name].len + 5);
         }
     }
 
-    void get(string route, Action<string> callback=null)
+    void get(string route, Action<string,byte[]> callback=null)
     {
         StartCoroutine(getCo(route, callback));
     }
 
-    IEnumerator getCo(string route, Action<string> callback=null)
+    IEnumerator getCo(string route, Action<string,byte[]> callback=null)
     {
         UnityWebRequest www = UnityWebRequest.Get(host + route);
         yield return www.SendWebRequest();
@@ -227,7 +228,7 @@ public class HidAPI : MonoBehaviour {
             // Show results as text
             Debug.Log(www.downloadHandler.text);
             if (callback != null)
-                callback(www.downloadHandler.text);
+                callback(www.downloadHandler.text,null);
         }
     }
 }

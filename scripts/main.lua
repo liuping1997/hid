@@ -65,10 +65,10 @@ end
 
 function M.init()
 	print("lua init")
-	console.set_cp(65001, 10)
+	console.set_cp(65001, 12)
 	console.set_cursor_visible(false)
-	console.set_window_size(120, 40)
-	console.set_buffer_size(120, 20)
+	console.set_window_size(120, 50)
+	console.set_buffer_size(120, 30)
 	http.init("0.0.0.0", 8011)
 	M.restful()
 	for i = 1, 64 do
