@@ -13,7 +13,7 @@ public class HidAPI : MonoBehaviour {
     public byte[] write_buf = new byte[64];
     public string host = "http://localhost:8011";
 
-    [DllImport("hidapi.dll")]
+    [DllImport("hidapi.dll",CharSet = CharSet.Ansi)]
     private static extern bool hidapi_open(ushort vid,ushort pid);
     [DllImport("hidapi.dll")]
     private static extern void hidapi_close();
@@ -46,6 +46,7 @@ public class HidAPI : MonoBehaviour {
       devinfo["motor"] = new WritePacket(0x09,0xaa,"motor","short");
       devinfo["led"] = new WritePacket(0x03,0xab,"led","byte");
       devinfo["marquee"] = new WritePacket(0x05,0xac,"marquee","byte");
+        open();
     }
 
     string ParseSwitch(byte b)
@@ -70,7 +71,7 @@ public class HidAPI : MonoBehaviour {
             write("motor", /*0b00000010*/2,0,2000,0);//控制电机2
             write("motor", /*0b00000100*/4,2000,0,0);//控制电机3
         }
-        else if (Input.GetKeyDown(KeyCode.R))
+        else if (Input.GetKeyDown(KeyCode.R) || true)
         {
             read((string rev, byte[] rev_bytes)=>
             {

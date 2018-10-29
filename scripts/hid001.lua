@@ -4,6 +4,8 @@ local hid = require("hid")
 local utils = require("utils")
 local console = require("console")
 
+local readlen = 0x2d
+
 -- 设备状态
 local status = {
   on = "开",
@@ -49,6 +51,11 @@ function M.event_loop(dt)
 end
 
 function M.read_buffer()
+  for i=1,readlen do
+    if rbuf[i] == nil then 
+        rbuf[i] = 0
+    end
+  end
   return rbuf
 end
 
@@ -124,7 +131,7 @@ function M.read()
     return
   end
 
-  local len = 0x2d
+  local len = readlen
   local buf = hid.read(len)
   -- shift array + 1
   rbuf[01],

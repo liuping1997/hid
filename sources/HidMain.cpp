@@ -49,7 +49,7 @@ extern "C"
 		AsyncHid::Buffer buf;
 		buf[0] = 0;
 		if (len > (buf.size() - 1))
-			len = buf.size() - 1;
+			len = (int)buf.size() - 1;
 		memcpy_s(buf.data() + 1, buf.size() - 1, wbuf, len);
 		boost::crc_optimal<16, 0x1021, 0, 0, true, true> crc_ccitt_kermit;
 		crc_ccitt_kermit = std::for_each(wbuf, wbuf + len, crc_ccitt_kermit);
