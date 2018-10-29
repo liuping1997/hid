@@ -13,16 +13,16 @@ public class HidAPI : MonoBehaviour {
     public byte[] write_buf = new byte[64];
     public string host = "http://localhost:8011";
 
-    [DllImport("hidapi.dll")]
+    [DllImport("hidapi", EntryPoint = "hidapi_open", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
     private static extern bool hidapi_open(ushort vid,ushort pid);
-    [DllImport("hidapi.dll")]
+    [DllImport("hidapi", EntryPoint = "hidapi_close", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
     private static extern void hidapi_close();
-    [DllImport("hidapi.dll", CharSet = CharSet.Ansi)]
-    private static extern bool hidapi_write(string data ,int len);
-    [DllImport("hidapi.dll", CharSet = CharSet.Ansi)]
-    private static extern bool hidapi_write_crc16(byte[] data ,int len);
-    [DllImport("hidapi.dll", CharSet = CharSet.Ansi)]
-    private static extern bool hidapi_read(ref byte[] data ,int len);
+    [DllImport("hidapi", EntryPoint = "hidapi_write", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void hidapi_write(string data, int len);
+    [DllImport("hidapi", EntryPoint = "hidapi_write_crc16", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void hidapi_write_crc16(ref byte data, int len);
+    [DllImport("hidapi", EntryPoint = "hidapi_read", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void hidapi_read(ref byte data, int len);
 
     class WritePacket
     {
@@ -68,7 +68,7 @@ public class HidAPI : MonoBehaviour {
             write("motor", /*0b0000011*/7,2000,2000,2000);//控制电机1 2 3
             write("motor", /*0b00000001*/1,2000,0,0);//控制电机1
             write("motor", /*0b00000010*/2,0,2000,0);//控制电机2
-            write("motor", /*0b00000100*/4,2000,0,0);//控制电机3
+            write("motor", /*0b00000100*/4,0,0, 2000);//控制电机3
         }
         else if (Input.GetKeyDown(KeyCode.R))
         {
@@ -167,7 +167,7 @@ public class HidAPI : MonoBehaviour {
         }
         else
         {
-            hidapi_read(ref read_buf, 64);
+            hidapi_read(ref read_buf[0], 64);
             callback("", read_buf);
         }
     }
@@ -205,7 +205,7 @@ public class HidAPI : MonoBehaviour {
                 write_buf[11] =(byte) (data3 & 0x00FF); write_buf[12] = (byte)((data3 & 0xFF00) >> 8);
             }
 
-            hidapi_write_crc16(write_buf, devinfo[name].len + 5);
+            hidapi_write_crc16(ref write_buf[0], devinfo[name].len + 5);
         }
     }
 

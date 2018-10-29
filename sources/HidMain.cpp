@@ -23,16 +23,31 @@ extern "C"
 	void hidapi_int()
 	{
 		AsyncHid::Get().init();
+		spdlog::info("current apppath:{0}", fs::current_path().generic_string());
+		app.reset(&Application::instance());
+		app->initialize();
 	}
 
 	bool hidapi_open(ushort usVID, ushort usPID)
 	{
+		if (app == nullptr)
+		{
+			AsyncHid::Get().init();
+			spdlog::info("current apppath:{0}", fs::current_path().generic_string());
+			app.reset(&Application::instance());
+			app->initialize();
+		}
 		return AsyncHid::Get().open(usVID, usPID);
 	}
 
 	void hidapi_close()
 	{
 		AsyncHid::Get().close();
+		spdlog::default_logger()->flush();
+		if (app == nullptr)
+		{
+			app->close();
+		}
 	}
 
 	void hidapi_write(const uchar *wbuf, int len)
@@ -62,7 +77,14 @@ extern "C"
 
 	void hidapi_read(uchar* buf, int len)
 	{
-		AsyncHid::Get().read(buf, len);
+		try
+		{
+			AsyncHid::Get().read(buf, len);
+		}
+		catch (...)
+		{
+			spdlog::error("hidapi_read error");
+		}
 	}
 }
 
@@ -137,9 +159,11 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
-		spdlog::info("current apppath:{0}", fs::current_path().generic_string());
-		app.reset(&Application::instance());
-		app->initialize();
+		OutputDebugStringA("enter hidapi 1");
+		//spdlog::info("current apppath:{0}", fs::current_path().generic_string());
+		//app.reset(&Application::instance());
+		//app->initialize();
+		OutputDebugStringA("enter hidapi 2");
 		break;
 	case DLL_THREAD_ATTACH:
 	case DLL_THREAD_DETACH:
